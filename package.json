@@ -1,0 +1,35 @@
+{
+  "name": "camstreet",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node camstreet-server.js"
+  },
+  "dependencies": {
+    "connect"              : "*",
+    "d8"                   : "*",
+    "date-utils"           : "*",
+    "jquery-browserify"    : "*",
+    "domready"             : "*",
+    "browserify"           : "*",
+    "underscore"           : "*",
+    "express"              : "*",
+    "mysql"                : "*",
+    "ejs"                  : "*",
+    "socket.io"            : "*",
+    "socket.io-browserify" : "*",
+    "d3"                   : "*",
+    "less-middleware"      : "*",
+    "node-sass"            : "*",
+    "underscore.nested"    : "*",
+    "deepmerge"            : "*",
+    "treeify"              : "*",
+    "traverse"             : "*",
+    "shp2json"             : "*"
+  },
+  "description": "ERROR: No README.md file found!",
+  "main": "camstreet-server.js",
+  "repository": "",
+  "author": "",
+  "license": "BSD"
+}
