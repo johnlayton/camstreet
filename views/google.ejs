@@ -281,7 +281,7 @@
             var info= new google.maps.InfoWindow();
             var map = new google.maps.Map(document.getElementById("map"), mapOptions);
 
-            var socket = io.connect('<%= host %>', {});
+            var socket = io.connect('localhost:8080', {});
 
             var toLatLon = function( pos ) {
                 return new google.maps.LatLng( pos.coords.latitude, pos.coords.longitude, false );

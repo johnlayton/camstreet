@@ -7,6 +7,7 @@ var connect = require('connect')
   , geohash = require('geohash').GeoHash
   , path    = require('path');
 
+/*
 var leaflet_host = "http://cdn.leafletjs.com/leaflet-0.4.4";
 var draw_host    = "http://jacobtoye.github.com/Leaflet.draw";
 var cam_host     = "http://localhost:3002";
@@ -40,13 +41,16 @@ if ( local ) {
   draw_host = "http://" +  host + ":3005";
 
 }
+*/
 
 var model = {
-  title   : "",
+  title   : ""
+/*
   host    : "http://" + host + ":3002",
   cam     : cam_host,
   leaflet : leaflet_host,
   draw    : draw_host
+*/
 };
 
 var render = function( req, res ) {
@@ -72,18 +76,19 @@ var app = connect()
   })
   .use(browser({
     require : [
-      'util',
+//      'util',
       'underscore',
-      'domready',
-      'traverse',
-      'date-utils',
-      'jquery-browserify',
-      'socket.io-browserify',
-      'd3',
-      path.join(__dirname, 'lib/geojson.js')
+//      'domready',
+//      'traverse',
+//      'date-utils',
+//      'jquery-browserify',
+      'socket.io-browserify'
+//      'd3',
+//      path.join(__dirname, 'lib/geojson.js')
     ]
   }))
-  .listen(3002);
+  .use(connect.static(path.join(__dirname)))
+  .listen(8080);
 
 var sockets = sock.listen(app);
 sockets.set('log level', 1);

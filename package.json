@@ -30,6 +30,7 @@
     "treeify"              : "*",
     "traverse"             : "*",
     "shp2json"             : "*",
+    "fs-extra"             : "*",
     "geohash"              : "*"
   },
   "description": "ERROR: No README.md file found!",

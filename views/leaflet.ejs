@@ -5,42 +5,44 @@
 
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
-        <link rel="stylesheet" href="<%= leaflet %>/dist/leaflet.css" />
-        <link rel="stylesheet" href="<%= draw %>/dist/leaflet.draw.css" />
-        <link rel="stylesheet" href="<%= cam %>/dist/camstreet.draw.css" />
+        <link rel="stylesheet" href="/dist/leaflet.css" />
+        <link rel="stylesheet" href="/dist/leaflet.draw.css" />
+        <link rel="stylesheet" href="/dist/camstreet.draw.css" />
 
         <!--[if lte IE 8]>
-        <link rel="stylesheet" href="<%= leaflet %>/dist/leaflet.ie.css" />
-        <link rel="stylesheet" href="<%= draw %>/dist/leaflet.draw.ie.css" />
-        <link rel="stylesheet" href="<%= cam %>/dist/camstreet.draw.ie.css" />
+        <link rel="stylesheet" href="/dist/leaflet.ie.css" />
+        <link rel="stylesheet" href="/dist/leaflet.draw.ie.css" />
+        <link rel="stylesheet" href="/dist/camstreet.draw.ie.css" />
         <![endif]-->
 
-        <script src="<%= leaflet %>/dist/leaflet-src.js"></script>
-        <!--<script src="<%= draw %>/dist/leaflet.draw-src.js"></script>-->
+        <script src="/dist/leaflet-src.js"></script>
+        <script src="/dist/leaflet.draw-src.js"></script>
 
-        <script src="<%= draw %>/src/ext/LineUtil.Intersect.js"></script>
-        <script src="<%= draw %>/src/ext/Polygon.Intersect.js"></script>
-        <script src="<%= draw %>/src/ext/Polyline.Intersect.js"></script>
+<!--
+        <script src="/src/ext/LineUtil.Intersect.js"></script>
+        <script src="/src/ext/Polygon.Intersect.js"></script>
+        <script src="/src/ext/Polyline.Intersect.js"></script>
 
-        <script src="<%= draw %>/src/Control.Toolbar.js"></script>
-        <script src="<%= draw %>/src/Tooltip.js"></script>
+        <script src="/src/Control.Toolbar.js"></script>
+        <script src="/src/Tooltip.js"></script>
 
-        <script src="<%= draw %>/src/draw/Control.Draw.js"></script>
-        <script src="<%= draw %>/src/draw/handler/Draw.Feature.js"></script>
-        <script src="<%= draw %>/src/draw/handler/Draw.SimpleShape.js"></script>
-        <script src="<%= draw %>/src/draw/handler/Draw.Polyline.js"></script>
-        <script src="<%= draw %>/src/draw/handler/Draw.Polygon.js"></script>
-        <script src="<%= draw %>/src/draw/handler/Draw.Rectangle.js"></script>
-        <script src="<%= draw %>/src/draw/handler/Draw.Circle.js"></script>
-        <script src="<%= draw %>/src/draw/handler/Draw.Marker.js"></script>
+        <script src="/src/draw/Control.Draw.js"></script>
+        <script src="/src/draw/handler/Draw.Feature.js"></script>
+        <script src="/src/draw/handler/Draw.SimpleShape.js"></script>
+        <script src="/src/draw/handler/Draw.Polyline.js"></script>
+        <script src="/src/draw/handler/Draw.Polygon.js"></script>
+        <script src="/src/draw/handler/Draw.Rectangle.js"></script>
+        <script src="/src/draw/handler/Draw.Circle.js"></script>
+        <script src="/src/draw/handler/Draw.Marker.js"></script>
 
-        <script src="<%= draw %>/src/edit/Control.Edit.js"></script>
-        <script src="<%= draw %>/src/edit/handler/Edit.Feature.js"></script>
-        <script src="<%= draw %>/src/edit/handler/Edit.SimpleShape.js"></script>
-        <!--<script src="<%= draw %>/src/edit/handler/Edit.Polyline.js"></script>-->
-        <script src="<%= draw %>/src/edit/handler/Edit.Circle.js"></script>
-        <script src="<%= draw %>/src/edit/handler/Edit.Rectangle.js"></script>
-        <script src="<%= draw %>/src/edit/handler/Delete.Feature.js"></script>
+        <script src="/src/edit/Control.Edit.js"></script>
+        <script src="/src/edit/handler/Edit.Feature.js"></script>
+        <script src="/src/edit/handler/Edit.SimpleShape.js"></script>
+        &lt;!&ndash;<script src="/src/edit/handler/Edit.Polyline.js"></script>&ndash;&gt;
+        <script src="/src/edit/handler/Edit.Circle.js"></script>
+        <script src="/src/edit/handler/Edit.Rectangle.js"></script>
+        <script src="/src/edit/handler/Delete.Feature.js"></script>
+-->
 
 
     </head>
@@ -51,23 +53,25 @@
 
         <script src="/browserify.js"></script>
         <script>
-            var util     = require('util');
-            var traverse = require('traverse');
-            var d3       = require('d3');
+//            var util     = require('util');
+//            var traverse = require('traverse');
+//            var d3       = require('d3');
             var _        = require('underscore');
-            var $        = require('jquery-browserify');
+//            var $        = require('jquery-browserify');
             var io       = require('socket.io-browserify');
 
             var map = L.map('map').setView([51.505, -0.09], 13);
             L.tileLayer('http://{s}.tile.cloudmade.com/BC9A493B41014CAABB98F0471D759707/997/256/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
 //            L.tileLayer('http://{s}.tile.stamen.com/toner-hybrid/{z}/{x}/{y}.png', {attribution: 'Stamen'}).addTo(map);
 
-            var drawnItems = new L.FeatureGroup();
+//            var drawnItems = new L.FeatureGroup();
+            var drawnItems = L.geoJson();
 
-            var socket = io.connect('<%= host %>', {});
+            var socket = io.connect(document.location.origin, {});
             socket.on('connect', function () {
 
-//              var geolayer = L.geoJson().addTo(map);
+//              var drawnItems = L.geoJson();
+//                drawnItems.addTo(map);
 //              drawnItems.addLayer(geolayer);
 
               socket.on('update', function( json ) {
@@ -81,7 +85,9 @@
                   });
 //                  geolayer.addData(json);
 //                  drawnItems.addLayer(feature);
-                  feature.addTo(map);
+//                  feature.addTo(map);
+
+                  drawnItems.addLayer( feature );
                   if ( json.features ) {
                       map.setView( [ json.features[0].geometry.coordinates[0][1],
                                      json.features[0].geometry.coordinates[0][0] ], 13 );
