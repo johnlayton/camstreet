@@ -29,7 +29,8 @@
     "deepmerge"            : "*",
     "treeify"              : "*",
     "traverse"             : "*",
-    "shp2json"             : "*"
+    "shp2json"             : "*",
+    "geohash"              : "*"
   },
   "description": "ERROR: No README.md file found!",
   "main": "camstreet-server.js",

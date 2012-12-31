@@ -1,1 +1,1 @@
-web: node camstreet-test-server.js
+web: node camstreet-server.js
