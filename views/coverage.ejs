@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+
+    <link rel="stylesheet" href="/dist/leaflet.css"/>
+    <link rel="stylesheet" href="/dist/camstreet.coverage.css"/>
+
+    <!--[if lte IE 8]>
+    <link rel="stylesheet" href="/dist/leaflet.ie.css"/>
+    <![endif]-->
+
+    <script src="/dist/leaflet-src.js"></script>
+    <script src="/dist/leaflet.ajax.js"></script>
+
+    <% if ( agent.indexOf( 'Mobile' ) > 0 ) {%>
+    <script src="/dist/cordova-2.3.0.js"></script>
+    <% } else { %>
+    <% } %>
+  </head>
+  <body>
+    <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+    <script src="/browserify.js"></script>
+    <script>
+      require( 'features' );
+      require( 'notifications' );
+      require( 'coverage' );
+      var _ = require( 'underscore' );
+      var u = require( 'util' );
+      var $ = require( 'jquery' );
+      var i = require( 'socket.io' );
+    </script>
+    <script>
+
+      var b = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile";
+      var c = "http://" + document.location.hostname + ":8888/";
+
+      var f = '/{z}/{x}/{y}.png';
+      var g = '/{z}/{y}/{x}.png';
+
+      var map = L.map( 'map', { attributionControl: false } )
+          .setView( [-37.8, 144.9], 7 );
+
+      L.control.scale( { imperial: false } ).addTo( map );
+
+      var underlays = {
+        "emap": L.tileLayer( c + 'mapscape' + f, { maxZoom: 18 } ).addTo( map ),
+        "arcgis": L.tileLayer( b + g, { maxZoom: 19 } ).addTo( map )
+      };
+
+      var overlays = {
+        "airfields": L.geoJson.coverage( c + 'airfields.json', {
+          title: 'Airfields',
+          val: 100, // set initial coverage as 100km
+          onEachFeature: feature('Airfield') /*, dataType: "jsonp" */ } ).addTo( map ),
+        "helipads": L.geoJson.coverage( c + 'helipads.json', {
+          title: 'Helipads',
+          onEachFeature: feature('Helipad') /*, dataType: "jsonp" */ } ).addTo( map ),
+        "staging": L.geoJson.coverage( c + 'staging.json', {
+          title: 'Staging Area',
+          onEachFeature: feature('Staging Area') /*, dataType: "jsonp" */ } ).addTo( map )
+      };
+
+      L.control.layers( underlays, overlays ).addTo( map );
+
+      // Use some better templating library?
+      function feature(type) {
+        return function( feature, layer ) {
+          var out = [];
+          if ( feature.properties ) {
+            for ( key in feature.properties ) {
+              out.push( "<dt>" + key + "</dt><dd>" + feature.properties[key] + "</dd> " );
+            }
+            layer.bindPopup( "<div  class='geojson-properties'><span class='title'>" + type + "</span><dl>" + out.join( "" ) + "</dl></div>" );
+            layer.options.title = feature.properties['DESC4'];
+          }
+        };
+      }
+    </script>
+  </body>
+</html>
