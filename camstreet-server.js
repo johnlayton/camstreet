@@ -1,116 +1,288 @@
-var connect = require('connect')
-  , fs      = require('fs')
-  , ejs     = require('ejs')
-  , util    = require('util')
-  , browser = require('browserify')
-  , sock    = require('socket.io')
-  , geohash = require('geohash').GeoHash
-  , path    = require('path');
+var connect   = require('connect')
+  , express   = require('express')
+  , fs        = require('fs')
+  , ejs       = require('ejs')
+  , util      = require('util')
+  , browser   = require('browserify')
+  , path      = require('path')
+  , oppressor = require('oppressor')
+  , http      = require('http');
 
-/*
-var leaflet_host = "http://cdn.leafletjs.com/leaflet-0.4.4";
-var draw_host    = "http://jacobtoye.github.com/Leaflet.draw";
-var cam_host     = "http://localhost:3002";
+var nano    = require('nano')('http://localhost:5984');
+var db_name = "places";
+var db      = nano.use(db_name);
 
-var local = true;
-
-var host = "192.168.1.3";
-//var host = "192.168.0.101";
-//var host = "192.168.43.71";
-//var host = "127.0.0.1";
-
-if ( local ) {
-  connect()
-    .use(connect.logger('dev'))
-    .use(connect.static('/Users/john/Development/home/camstreet'))
-    .listen(3003);
-
-  cam_host = "http://" + host + ":3003";
-
-  connect()
-    .use(connect.logger('dev'))
-    .use(connect.static('/Users/john/Development/home/jancourt'))
-    .listen(3004);
-
-  leaflet_host = "http://" + host + ":3004";
-
-  connect()
-    .use(connect.logger('dev'))
-    .use(connect.static('/Users/john/Development/home/ameitstreet'))
-    .listen(3005);
-  draw_host = "http://" +  host + ":3005";
-
-}
-*/
-
-var model = {
-  title   : ""
-/*
-  host    : "http://" + host + ":3002",
-  cam     : cam_host,
-  leaflet : leaflet_host,
-  draw    : draw_host
-*/
-};
-
-var render = function( req, res ) {
-  return function( error, content ) {
-    if ( error ) {
-      res.writeHead(500, { 'Content-Type': 'text/html' });
-      res.end(error);
-    } else {
-      res.writeHead(200, { 'Content-Type': 'text/html' });
-      res.end(ejs.render( content, model ));
+//http://localhost:5984/places/_design/main/_spatial/points?bbox=143,-45,160,-35
+nano.db.create(db_name, function () {
+  db.insert(
+    { "spatial":
+      {
+        "points": function(doc) {
+          if (doc.geometry.coordinates) {
+            emit( { type: "Point",
+                    coordinates: [doc.geometry.coordinates[0], doc.geometry.coordinates[1]]
+                  }, [doc._id, doc.geometry]
+            );
+          }
+        }
+      }
+    },
+    '_design/main',
+    function (err, res) {
+      if ( err ) {
+        util.debug( '** FAILURE **' );
+        util.debug( util.inspect( err ) );
+      } else {
+        util.debug( '** SUCCESS **' );
+        util.debug( util.inspect( res ) );
+      }
     }
-  };
+  );
+});
+
+var b = browser()
+b.require('underscore')
+b.require('util')
+b.require('d3')
+b.require('traverse')
+b.require('geohash')
+b.require('http-browserify')
+b.require('socket.io-browserify',             { expose: 'socket.io' })
+b.require('jquery-browserify',                { expose: 'jquery' })
+b.require('./lib/camstreet.geojson.js',       { expose: 'geojson' })
+b.require('./lib/camstreet.features.js',      { expose: 'features' })
+b.require('./lib/camstreet.time.js',          { expose: 'time' })
+b.require('./lib/camstreet.coverage.js',      { expose: 'coverage' })
+b.require('./lib/camstreet.notifications.js', { expose: 'notifications' })
+
+var app = express();
+
+var cross = function(req, res, next) {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
+  if ('OPTIONS' == req.method) {
+    res.send(200);
+  }
+  else {
+    next();
+  }
 };
 
-var app = connect()
-  .use(connect.logger('dev'))
-  .use(connect.query())
-  .use("/google", function(req,res) {
-    fs.readFile(path.join(__dirname, 'views/google.ejs'), 'utf-8', render(req, res) )
-  })
-  .use("/leaflet", function(req,res) {
-    fs.readFile(path.join(__dirname, 'views/leaflet.ejs'), 'utf-8', render(req, res) )
-  })
-  .use(browser({
-    require : [
-//      'util',
-      'underscore',
-//      'domready',
-//      'traverse',
-//      'date-utils',
-//      'jquery-browserify',
-      'socket.io-browserify'
-//      'd3',
-//      path.join(__dirname, 'lib/geojson.js')
-    ]
-  }))
-  .use(connect.static(path.join(__dirname)))
-  .listen(8080);
+app.configure(function(){
+  app.set('port', process.env.PORT || 8080);
+  app.set('views', __dirname + '/views');
+  app.set('view engine', 'ejs');
+  app.use(cross);
+  app.use(express.favicon());
+  app.use(express.logger('dev'));
+  app.use(express.bodyParser());
+  app.use(express.methodOverride());
+  app.use(app.router);
+  app.use(require('less-middleware')({
+     src:   path.join( __dirname, '/less' )
+   , dest:  path.join( __dirname, '/public' )
+  }));
+  /*
+  app.use(sass.middleware({
+      src:   path.join( __dirname, '/sass' )
+    , dest:  path.join( __dirname, '/public' )
+    , debug: true
+  }));
+  */
+  app.use(connect.static(path.join(__dirname)));
+  /*
+  app.use(express.static(path.join(__dirname, 'public')));
+  */
+});
 
-var sockets = sock.listen(app);
-sockets.set('log level', 1);
-sockets.on('connection', function(socket) {
-  console.log("Connection");
-  socket.on('update', function( pos ) {
-    console.log( geohash.encodeGeoHash( pos.latitude, pos.longitude ) )
+app.configure('development', function(){
+  app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
+});
+
+app.get("/", function(req,res){
+  var agent = req.headers['user-agent'];
+  res.render('index', {
+    title : 'Welcome',
+    agent : agent
+  });
+});
+
+app.get("/browserify.js", function(req,res) {
+  res.set( "Content-Type", "application/javascript" );
+  b.bundle(function(err,src){} ).pipe(oppressor(req)).pipe(res);
+});
+
+app.get("/tracking/:id", function(req,res) {
+  var agent = req.headers['user-agent'];
+  res.render('tracking', {
+    title : 'Tracking',
+    id    : req.params.id,
+    agent : agent
+  });
+})
+
+app.get("/coverage", function(req,res) {
+  var agent = req.headers['user-agent'];
+  res.render('coverage', {
+    title : 'Coverage Demo',
+    agent : agent
+  });
+})
+
+app.get("/conference/:id", function(req,res) {
+  var agent = req.headers['user-agent'];
+  res.render('conference', {
+    title : 'Conferenceß',
+    id    : req.params.id,
+    agent : agent
+  });
+})
+
+/*
+app.get("/leaflet/:id", function(req,res) {
+  var agent = req.headers['user-agent']
+  res.render('leaflet', {
+    title : 'Drawing',
+    id    : req.params.id,
+    agent : agent
+  });
+})
+ */
+
+app.get("/wax", function(req,res) {
+  var agent = req.headers['user-agent']
+  res.render('wax', {
+    title : 'Wax Demo',
+    agent : agent
+  });
+})
+
+app.get("/room/:room", function(req,res) {
+  var agent = req.headers['user-agent']
+  res.render('room', {
+    title : 'Room ' + req.params.room,
+    room  : req.params.room,
+    agent : agent
+  });
+})
+
+app.get("/basic", function(req,res) {
+  res.render('basic', {
+    title : 'Basic Demo'
+  });
+})
+
+var server = http.createServer(app).listen(app.get('port'), "0.0.0.0", function(){
+  console.log("Express server listening on port " + app.get('port'));
+});
+
+var io = require('socket.io').listen(server);
+
+io.set('log level', 1);
+io.of('/asset').on('connection', function(socket){
+  socket.on('identity', function (data, func) {
+    socket.set( 'identity', data, function () {
+      func();
+    });
+  });
+  socket.on('position', function( position ) {
+    socket.get( 'identity', function(error, identity){
+      socket.broadcast.emit('position', {
+        identity: identity,
+        position: position
+      });
+    })
+  });
+});
+
+io.of('/feature' ).on('connection', function( socket ) {
+  socket.on('created', function( data, func ) {
+    db.insert(data, function (err, body, headers) {
+      if(err) {
+        if(err.message === 'no_db_file') {
+          return nano.db.create(db_name, function () {
+            insert_doc(doc, tried+1);
+          });
+        }
+        else { return console.log(err); }
+        util.debug( util.inspect( err ) );
+      }
+      data.properties.options.id = body.id
+      data.id = body.id
+      socket.broadcast.emit( 'created', data);
+      if ( func ) { func( body.id ); }
+    });
+  });
+  socket.on('edited', function( data, func ) {
+    socket.broadcast.emit( 'edited', data);
+    if ( func ) { func(); }
+  });
+  socket.on('deleted', function( data, func ) {
+    socket.broadcast.emit( 'deleted', data);
+    if ( func ) { func(); }
+  });
+});
+
+io.of('/view' ).on('connection', function(socket){
+  socket.on('update', function(data) {
+    socket.broadcast.emit('update', data);
+  });
+});
+
+/**
+ * TODO: not working as signal server for webrtc client
+ */
+var conference = io.of('/conference').on('connection', function (client) {
+  // pass a message
+  client.on('message', function (details) {
+    var otherClient = io.sockets.sockets[details.to];
+    if (!otherClient) {
+      return;
+    }
+    delete details.to;
+    details.from = client.id;
+    otherClient.emit('message', details);
   });
 
-  socket.on("add", function( pos ) {
-    util.debug( util.inspect( pos, false, 10, true ) );
-    socket.broadcast.emit('update', pos );
-//    console.log( geohash.encodeGeoHash( pos.latitude, pos.longitude ) )
+  client.on('join', function (name) {
+    client.join(name);
+    conference.emit('joined', {
+      room: name,
+      id: client.id
+    });
   });
 
-  fs.readFile(path.join(__dirname, 'data/test.json'), 'utf-8', function(error, content) {
-    if ( error ) {
-      socket.emit('update', error);
+  function leave() {
+    var rooms = io.sockets.manager.roomClients[client.id];
+    for (var name in rooms) {
+      if (name) {
+        //io.sockets.in(name.slice(1)).emit('left', {
+        conference.emit('left', {
+          room: name,
+          id: client.id
+        });
+      }
+    }
+  }
+
+  client.on('disconnect', leave);
+  client.on('leave', leave);
+
+  client.on('create', function (name, cb) {
+    if (arguments.length == 2) {
+      cb = (typeof cb == 'function') ? cb : function () {};
+      name = name || uuid();
     } else {
-//      setInterval( function(){
-        socket.emit('update', JSON.parse( content ));
-//      }, 5000 );
+      cb = name;
+      name = uuid();
+    }
+    // check if exists
+    if (io.sockets.clients(name).length) {
+      cb('taken');
+    } else {
+      client.join(name);
+      if (cb) cb(null, name);
     }
   });
 });
