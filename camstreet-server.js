@@ -108,6 +108,38 @@ app.get("/", function(req,res){
   });
 });
 
+app.get("/coverage", function(req,res) {
+  var agent = req.headers['user-agent'];
+  res.render('coverage', {
+    title : 'Coverage Demo',
+    agent : agent
+  });
+})
+
+app.get("/wax", function(req,res) {
+  var agent = req.headers['user-agent']
+  res.render('wax', {
+    title : 'Wax Demo',
+    agent : agent
+  });
+})
+
+app.get("/google", function(req,res) {
+  var agent = req.headers['user-agent']
+  res.render('google', {
+    title : 'Google Demo',
+    agent : agent
+  });
+})
+
+app.get("/notification", function(req,res) {
+  var agent = req.headers['user-agent']
+  res.render('google', {
+    title : 'Google Demo',
+    agent : agent
+  });
+})
+
 app.get("/browserify.js", function(req,res) {
   res.set( "Content-Type", "application/javascript" );
   b.bundle(function(err,src){} ).pipe(oppressor(req)).pipe(res);
@@ -118,14 +150,6 @@ app.get("/tracking/:id", function(req,res) {
   res.render('tracking', {
     title : 'Tracking',
     id    : req.params.id,
-    agent : agent
-  });
-})
-
-app.get("/coverage", function(req,res) {
-  var agent = req.headers['user-agent'];
-  res.render('coverage', {
-    title : 'Coverage Demo',
     agent : agent
   });
 })
@@ -149,14 +173,6 @@ app.get("/leaflet/:id", function(req,res) {
   });
 })
  */
-
-app.get("/wax", function(req,res) {
-  var agent = req.headers['user-agent']
-  res.render('wax', {
-    title : 'Wax Demo',
-    agent : agent
-  });
-})
 
 app.get("/room/:room", function(req,res) {
   var agent = req.headers['user-agent']

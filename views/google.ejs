@@ -1,325 +1,54 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title><%= title %></title>
-        <!--<link   rel='stylesheet' href='/stylesheets/gantt.css' />-->
-        <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-        <style type="text/css">
-            html { height: 100% }
-            body { height: 100%; margin: 0; padding: 0 }
-            #map { height: 100% }
-        </style>
-        <script type="text/javascript"
-                src="https://maps.googleapis.com/maps/api/js?sensor=true">
-        </script>
-    </head>
-    <body>
-        <div id="controls" style="display: none;">
-            <a id="notifications" href="#">notifications</a>
-        </div>
-        <div id="map" style="width:100%; height:100%"></div>
-        <script>
-        var GeoJSON = function( geojson, options ){
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 
-            var _geometryToGoogleMaps = function( geojsonGeometry, opts, geojsonProperties ){
+    <title><%= title %></title>
 
-                var googleObj;
+    <style type="text/css">
+      html {
+        height: 100%
+      }
 
-                switch ( geojsonGeometry.type ){
-                    case "Point":
-                        opts.position = new google.maps.LatLng(geojsonGeometry.coordinates[1], geojsonGeometry.coordinates[0]);
-                        googleObj = new google.maps.Marker(opts);
-                        if (geojsonProperties) {
-                            googleObj.set("geojsonProperties", geojsonProperties);
-                        }
-                        break;
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0
+      }
 
-                    case "MultiPoint":
-                        googleObj = [];
-                        for (var i = 0; i < geojsonGeometry.coordinates.length; i++){
-                            opts.position = new google.maps.LatLng(geojsonGeometry.coordinates[i][1], geojsonGeometry.coordinates[i][0]);
-                            googleObj.push(new google.maps.Marker(opts));
-                        }
-                        if (geojsonProperties) {
-                            for (var k = 0; k < googleObj.length; k++){
-                                googleObj[k].set("geojsonProperties", geojsonProperties);
-                            }
-                        }
-                        break;
+      #map {
+        height: 100%
+      }
+    </style>
+    <script type="text/javascript"
+            src="https://maps.googleapis.com/maps/api/js?sensor=true">
+    </script>
 
-                    case "LineString":
-                        var path = [];
-                        for (var i = 0; i < geojsonGeometry.coordinates.length; i++){
-                            var coord = geojsonGeometry.coordinates[i];
-                            var ll = new google.maps.LatLng(coord[1], coord[0]);
-                            path.push(ll);
-                        }
-                        opts.path = path;
-                        googleObj = new google.maps.Polyline(opts);
-                        if (geojsonProperties) {
-                            googleObj.set("geojsonProperties", geojsonProperties);
-                        }
-                        break;
+    <link rel="stylesheet" href="/dist/leaflet.css"/>
 
-                    case "MultiLineString":
-                        googleObj = [];
-                        for (var i = 0; i < geojsonGeometry.coordinates.length; i++){
-                            var path = [];
-                            for (var j = 0; j < geojsonGeometry.coordinates[i].length; j++){
-                                var coord = geojsonGeometry.coordinates[i][j];
-                                var ll = new google.maps.LatLng(coord[1], coord[0]);
-                                path.push(ll);
-                            }
-                            opts.path = path;
-                            googleObj.push(new google.maps.Polyline(opts));
-                        }
-                        if (geojsonProperties) {
-                            for (var k = 0; k < googleObj.length; k++){
-                                googleObj[k].set("geojsonProperties", geojsonProperties);
-                            }
-                        }
-                        break;
+    <!--[if lte IE 8]>
+    <link rel="stylesheet" href="/dist/leaflet.ie.css"/>
+    <![endif]-->
 
-                    case "Polygon":
-                        var paths = [];
-                        var exteriorDirection;
-                        var interiorDirection;
-                        for (var i = 0; i < geojsonGeometry.coordinates.length; i++){
-                            var path = [];
-                            for (var j = 0; j < geojsonGeometry.coordinates[i].length; j++){
-                                var ll = new google.maps.LatLng(geojsonGeometry.coordinates[i][j][1], geojsonGeometry.coordinates[i][j][0]);
-                                path.push(ll);
-                            }
-                            if(!i){
-                                exteriorDirection = _ccw(path);
-                                paths.push(path);
-                            }else if(i == 1){
-                                interiorDirection = _ccw(path);
-                                if(exteriorDirection == interiorDirection){
-                                    paths.push(path.reverse());
-                                }else{
-                                    paths.push(path);
-                                }
-                            }else{
-                                if(exteriorDirection == interiorDirection){
-                                    paths.push(path.reverse());
-                                }else{
-                                    paths.push(path);
-                                }
-                            }
-                        }
-                        opts.paths = paths;
-                        googleObj = new google.maps.Polygon(opts);
-                        if (geojsonProperties) {
-                            googleObj.set("geojsonProperties", geojsonProperties);
-                        }
-                        break;
+    <script src="/dist/leaflet-src.js"></script>
+    <script src="/dist/leaflet.google-src.js"></script>
 
-                    case "MultiPolygon":
-                        googleObj = [];
-                        for (var i = 0; i < geojsonGeometry.coordinates.length; i++){
-                            var paths = [];
-                            var exteriorDirection;
-                            var interiorDirection;
-                            for (var j = 0; j < geojsonGeometry.coordinates[i].length; j++){
-                                var path = [];
-                                for (var k = 0; k < geojsonGeometry.coordinates[i][j].length; k++){
-                                    var ll = new google.maps.LatLng(geojsonGeometry.coordinates[i][j][k][1], geojsonGeometry.coordinates[i][j][k][0]);
-                                    path.push(ll);
-                                }
-                                if(!j){
-                                    exteriorDirection = _ccw(path);
-                                    paths.push(path);
-                                }else if(j == 1){
-                                    interiorDirection = _ccw(path);
-                                    if(exteriorDirection == interiorDirection){
-                                        paths.push(path.reverse());
-                                    }else{
-                                        paths.push(path);
-                                    }
-                                }else{
-                                    if(exteriorDirection == interiorDirection){
-                                        paths.push(path.reverse());
-                                    }else{
-                                        paths.push(path);
-                                    }
-                                }
-                            }
-                            opts.paths = paths;
-                            googleObj.push(new google.maps.Polygon(opts));
-                        }
-                        if (geojsonProperties) {
-                            for (var k = 0; k < googleObj.length; k++){
-                                googleObj[k].set("geojsonProperties", geojsonProperties);
-                            }
-                        }
-                        break;
+    <% if ( agent.indexOf( 'Mobile' ) > 0 ) {%>
+    <script src="/dist/cordova-2.3.0.js"></script>
+    <% } else { %>
+    <% } %>
+  </head>
+  <body>
+    <div id="map" style="width:100%; height:100%"></div>
+    <script>
+      var mapOptions = {
+        center: new google.maps.LatLng( -36.7, 144.6 ),
+        zoom: 10,
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+      };
+      var info = new google.maps.InfoWindow();
+      var map = new google.maps.Map( document.getElementById( "map" ), mapOptions );
 
-                    case "GeometryCollection":
-                        googleObj = [];
-                        if (!geojsonGeometry.geometries){
-                            googleObj = _error("Invalid GeoJSON object: GeometryCollection object missing \"geometries\" member.");
-                        }else{
-                            for (var i = 0; i < geojsonGeometry.geometries.length; i++){
-                                googleObj.push(_geometryToGoogleMaps(geojsonGeometry.geometries[i], opts, geojsonProperties || null));
-                            }
-                        }
-                        break;
-
-                    default:
-                        googleObj = _error("Invalid GeoJSON object: Geometry object must be one of \"Point\", \"LineString\", \"Polygon\" or \"MultiPolygon\".");
-                }
-
-                return googleObj;
-
-            };
-
-            var _error = function( message ){
-
-                return {
-                    type: "Error",
-                    message: message
-                };
-
-            };
-
-            var _ccw = function( path ){
-                var isCCW;
-                var a = 0;
-                for (var i = 0; i < path.length-2; i++){
-                    a += ((path[i+1].lat() - path[i].lat()) * (path[i+2].lng() - path[i].lng()) - (path[i+2].lat() - path[i].lat()) * (path[i+1].lng() - path[i].lng()));
-                }
-                if(a > 0){
-                    isCCW = true;
-                }
-                else{
-                    isCCW = false;
-                }
-                return isCCW;
-            };
-
-            var obj;
-
-            var opts = options || {};
-
-            switch ( geojson.type ){
-
-                case "FeatureCollection":
-                    if (!geojson.features){
-                        obj = _error("Invalid GeoJSON object: FeatureCollection object missing \"features\" member.");
-                    }else{
-                        obj = [];
-                        for (var i = 0; i < geojson.features.length; i++){
-                            obj.push(_geometryToGoogleMaps(geojson.features[i].geometry, opts, geojson.features[i].properties));
-                        }
-                    }
-                    break;
-
-                case "GeometryCollection":
-                    if (!geojson.geometries){
-                        obj = _error("Invalid GeoJSON object: GeometryCollection object missing \"geometries\" member.");
-                    }else{
-                        obj = [];
-                        for (var i = 0; i < geojson.geometries.length; i++){
-                            obj.push(_geometryToGoogleMaps(geojson.geometries[i], opts));
-                        }
-                    }
-                    break;
-
-                case "Feature":
-                    if (!( geojson.properties && geojson.geometry )){
-                        obj = _error("Invalid GeoJSON object: Feature object missing \"properties\" or \"geometry\" member.");
-                    }else{
-                        obj = _geometryToGoogleMaps(geojson.geometry, opts, geojson.properties);
-                    }
-                    break;
-
-                case "Point": case "MultiPoint": case "LineString": case "MultiLineString": case "Polygon": case "MultiPolygon":
-                obj = geojson.coordinates
-                        ? obj = _geometryToGoogleMaps(geojson, opts)
-                        : _error("Invalid GeoJSON object: Geometry object missing \"coordinates\" member.");
-                break;
-
-                default:
-                    obj = _error("Invalid GeoJSON object: GeoJSON object must be one of \"Point\", \"LineString\", \"Polygon\", \"MultiPolygon\", \"Feature\", \"FeatureCollection\" or \"GeometryCollection\".");
-
-            }
-
-            return obj;
-
-        };
-
-        </script>
-        <script src="/browserify.js"></script>
-        <script>
-            var util     = require('util');
-            var traverse = require('traverse');
-            var d3       = require('d3');
-            var _        = require('underscore');
-            var $        = require('jquery-browserify');
-            var io       = require('socket.io-browserify');
-//            var GeoJSON  = require('/lib/geojson.js')();
-
-            $('#notifications').live('click',
-                function(e) {
-                    if (window.webkitNotifications.checkPermission() == 0) {
-                        notification_test = window.webkitNotifications.createNotification('icon.png', 'Notification Title', 'Notification content...');
-                        notification_test.ondisplay = function() { console.log(" displayed ") };
-                        notification_test.onclose = function() { console.log(" closed ") };
-                        notification_test.show();
-                    } else {
-                        window.webkitNotifications.requestPermission();
-                    }
-                    return false;
-                }
-            );
-            var mapOptions = {
-                center: new google.maps.LatLng(-36.7, 144.6),
-                zoom: 10,
-                mapTypeId: google.maps.MapTypeId.ROADMAP
-            };
-            var info= new google.maps.InfoWindow();
-            var map = new google.maps.Map(document.getElementById("map"), mapOptions);
-
-            var socket = io.connect('localhost:8080', {});
-
-            var toLatLon = function( pos ) {
-                return new google.maps.LatLng( pos.coords.latitude, pos.coords.longitude, false );
-            };
-
-            socket.on('connect', function () {
-              socket.on('update', function( json ) {
-                console.log( json );
-                  var opts = {
-                      strokeColor: "#FF3333",
-                      strokeWeight: 2,
-                      strokeOpacity: 0.9,
-                      zoom: 17
-                  };
-
-                  googleVector = new GeoJSON(json, opts);
-
-                  if (googleVector.error){
-                      console.log( googleVector.error );
-                  }else{
-                      if (_.isArray( googleVector ) ) {
-                          _.each( googleVector, function(vector) { vector.setMap(map) } );
-                      } else {
-                          googleVector.setMap(map);
-                      }
-                  }
-              });
-              setInterval(function() {
-                  navigator.geolocation.getCurrentPosition(
-                    function( pos ) {
-                      socket.emit( "update", pos.coords );
-                    },
-                    function( err ) {
-                      console.log( err );
-                    }
-                  );
-              }, 5000);
-            });
-        </script>
-    </body>
+    </script>
+  </body>
 </html>
