@@ -1,0 +1,34 @@
+/* ================================================================== */
+/* Toolbars
+/* ================================================================== */
+
+.leaflet-coverage-section {
+	position: relative;
+}
+
+.leaflet-coverage-toolbar {
+	margin-top: 12px;
+}
+
+.leaflet-coverage-toolbar-top {
+	margin-top: 0;
+}
+
+.leaflet-coverage-toolbar-notop a:first-child {
+	border-top-right-radius: 0;
+}
+
+.leaflet-coverage-toolbar-nobottom a:last-child {
+	border-bottom-right-radius: 0;
+}
+
+.leaflet-coverage-toolbar a {
+	/*background-image: url('images/camstreet-coverage.png');*/
+	background-repeat: no-repeat;
+}
+
+.leaflet-coverage a {
+	display: block;
+	text-align: center;
+	text-decoration: none;
+}
