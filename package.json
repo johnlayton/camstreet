@@ -10,6 +10,8 @@
     "start": "node camstreet-server.js"
   },
   "dependencies": {
+    "buffer-stream"        : "*",
+    "http-browserify"      : "*",
     "connect"              : "*",
     "d8"                   : "*",
     "date-utils"           : "*",
@@ -27,13 +29,17 @@
     "node-sass"            : "*",
     "underscore.nested"    : "*",
     "deepmerge"            : "*",
+    "oppressor"            : "*",
     "treeify"              : "*",
     "traverse"             : "*",
     "shp2json"             : "*",
     "fs-extra"             : "*",
-    "geohash"              : "*"
+    "geohash"              : "*",
+    "ncp"                  : "*",
+    "cradle"               : "*",
+    "nano"                 : "*"
   },
-  "description": "ERROR: No README.md file found!",
+  "description": "",
   "main": "camstreet-server.js",
   "repository": "",
   "author": "",
