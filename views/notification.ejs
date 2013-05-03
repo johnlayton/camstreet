@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+
+    <title><%= title %></title>
+
+    <link rel="stylesheet" href="/dist/leaflet.css"/>
+
+    <!--[if lte IE 8]>
+    <link rel="stylesheet" href="/dist/leaflet.ie.css"/>
+    <![endif]-->
+
+    <script src="/dist/leaflet-src.js"></script>
+
+    <% if ( agent.indexOf( 'Mobile' ) > 0 ) {%>
+    <script src="/dist/cordova-2.3.0.js"></script>
+    <% } else { %>
+    <% } %>
+  </head>
+  <body>
+    <div id="controls" style="display: none;">
+      <a id="notifications" href="#">notifications</a>
+    </div>
+    <div id="map" style="width:100%; height:100%"></div>
+    <script src="/browserify"></script>
+    <script>
+              require('branding');
+              require('notifications');
+      var _ = require('underscore');
+      var u = require('util');
+      var $ = require('jquery');
+      var i = io;
+    </script>
+    <script>
+      /*
+       $('#notifications').live('click',
+       function(e) {
+       if (window.webkitNotifications.checkPermission() == 0) {
+       notification_test = window.webkitNotifications.createNotification('icon.png', 'Notification Title', 'Notification content...');
+       notification_test.ondisplay = function() { console.log(" displayed ") };
+       notification_test.onclose = function() { console.log(" closed ") };
+       notification_test.show();
+       } else {
+       window.webkitNotifications.requestPermission();
+       }
+       return false;
+       }
+       );
+       */
+      var mapOptions = {
+        center: new google.maps.LatLng( -36.7, 144.6 ),
+        zoom: 10,
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+      };
+      var info = new google.maps.InfoWindow();
+      var map = new google.maps.Map( document.getElementById( "map" ), mapOptions );
+      /*
+       var socket = io.connect('localhost:8080', {});
+
+       var toLatLon = function( pos ) {
+       return new google.maps.LatLng( pos.coords.latitude, pos.coords.longitude, false );
+       };
+
+       $.ajax
+
+       socket.on('connect', function () {
+       socket.on('update', function( json ) {
+       console.log( json );
+       var opts = {
+       strokeColor: "#FF3333",
+       strokeWeight: 2,
+       strokeOpacity: 0.9,
+       zoom: 17
+       };
+
+       googleVector = new GeoJSON(json, opts);
+
+       if (googleVector.error){
+       console.log( googleVector.error );
+       }else{
+       if (_.isArray( googleVector ) ) {
+       _.each( googleVector, function(vector) { vector.setMap(map) } );
+       } else {
+       googleVector.setMap(map);
+       }
+       }
+       });
+       setInterval(function() {
+       navigator.geolocation.getCurrentPosition(
+       function( pos ) {
+       socket.emit( "update", pos.coords );
+       },
+       function( err ) {
+       console.log( err );
+       }
+       );
+       }, 5000);
+       });
+       */
+    </script>
+  </body>
+</html>

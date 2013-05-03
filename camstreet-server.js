@@ -54,6 +54,7 @@ b.require('./lib/camstreet.features.js',      { expose: 'features' })
 b.require('./lib/camstreet.time.js',          { expose: 'time' })
 b.require('./lib/camstreet.coverage.js',      { expose: 'coverage' })
 b.require('./lib/camstreet.notifications.js', { expose: 'notifications' })
+b.require('./lib/camstreet.branding.js',      { expose: 'branding' })
 
 var app = express();
 
@@ -134,16 +135,11 @@ app.get("/google", function(req,res) {
 
 app.get("/notification", function(req,res) {
   var agent = req.headers['user-agent']
-  res.render('google', {
-    title : 'Google Demo',
+  res.render('notification', {
+    title : 'Notification Demo',
     agent : agent
   });
 })
-
-app.get("/browserify.js", function(req,res) {
-  res.set( "Content-Type", "application/javascript" );
-  b.bundle(function(err,src){} ).pipe(oppressor(req)).pipe(res);
-});
 
 app.get("/tracking/:id", function(req,res) {
   var agent = req.headers['user-agent'];
@@ -154,25 +150,23 @@ app.get("/tracking/:id", function(req,res) {
   });
 })
 
-app.get("/conference/:id", function(req,res) {
+app.get("/drawing/:id", function(req,res) {
   var agent = req.headers['user-agent'];
-  res.render('conference', {
-    title : 'Conferenceß',
-    id    : req.params.id,
-    agent : agent
-  });
-})
-
-/*
-app.get("/leaflet/:id", function(req,res) {
-  var agent = req.headers['user-agent']
-  res.render('leaflet', {
+  res.render('drawing', {
     title : 'Drawing',
     id    : req.params.id,
     agent : agent
   });
 })
- */
+
+app.get("/conference/:id", function(req,res) {
+  var agent = req.headers['user-agent'];
+  res.render('conference', {
+    title : 'Conference',
+    id    : req.params.id,
+    agent : agent
+  });
+})
 
 app.get("/room/:room", function(req,res) {
   var agent = req.headers['user-agent']
@@ -183,11 +177,12 @@ app.get("/room/:room", function(req,res) {
   });
 })
 
-app.get("/basic", function(req,res) {
-  res.render('basic', {
-    title : 'Basic Demo'
-  });
-})
+app.get("/browserify", function(req,res) {
+  res.set( "Content-Type", "application/javascript" );
+  b.bundle(function(err,src){} ).pipe(oppressor(req)).pipe(res);
+});
+
+
 
 var server = http.createServer(app).listen(app.get('port'), "0.0.0.0", function(){
   console.log("Express server listening on port " + app.get('port'));
@@ -273,7 +268,6 @@ var conference = io.of('/conference').on('connection', function (client) {
     var rooms = io.sockets.manager.roomClients[client.id];
     for (var name in rooms) {
       if (name) {
-        //io.sockets.in(name.slice(1)).emit('left', {
         conference.emit('left', {
           room: name,
           id: client.id
