@@ -22,15 +22,14 @@
     <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
     <script src="/browserify"></script>
     <script>
-              require( 'branding' );
-              require( 'notifications' );
+      require( 'branding' );
+      require( 'notifications' );
       var _ = require( 'underscore' );
       var u = require( 'util' );
       var $ = require( 'jquery' );
       var i = require( 'socket.io' );
     </script>
     <script>
-
       var b = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile";
       var c = "http://" + document.location.hostname + ":8888/";
 
@@ -51,14 +50,17 @@
 
       L.control.layers( underlays, overlays ).addTo( map );
 
-      var message = function(latlng) {
+      var message = function ( latlng ) {
         return "Position [" + latlng + "]";
       }
 
       map.on( 'moveend', function ( e ) {
-        map.notification("New Position", message( e.target.getCenter() ),
-            function() {  },
-            function() {  }
+        map.notification( "New Position", message( e.target.getCenter() ),
+            function () {
+              console.log( "show message " + message( e.target.getCenter() ) );
+            },
+            function () {
+            }
         );
       } );
 
