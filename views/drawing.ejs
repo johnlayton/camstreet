@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+
+    <link rel="stylesheet" href="/dist/leaflet.css"/>
+    <link rel="stylesheet" href="/dist/leaflet.draw.css"/>
+
+    <!--[if lte IE 8]>
+    <link rel="stylesheet" href="/dist/leaflet.ie.css"/>
+    <link rel="stylesheet" href="/dist/leaflet.draw.ie.css"/>
+    <![endif]-->
+
+    <script src="/dist/leaflet-src.js"></script>
+    <script src="/dist/leaflet.draw-src.js"></script>
+
+    <% if ( agent.indexOf( 'Mobile' ) > 0 ) {%>
+    <script src="/dist/cordova-2.3.0.js"></script>
+    <% } else { %>
+    <% } %>
+  </head>
+  <body>
+    <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+    <script src="/browserify"></script>
+    <script>
+      require( 'branding' );
+      var _ = require( 'underscore' );
+      var u = require( 'util' );
+      var $ = require( 'jquery' );
+      var i = require( 'socket.io' );
+    </script>
+    <script>
+      var a = "http://emap.dse.vic.gov.au/ArcGIS/rest/services/mapscape/MapServer/tile";
+      var b = "http://devgeocortex01.fire.dse.vic.gov.au/ArcGIS/rest/services/mapscape/MapServer/tile";
+      var c = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/";
+
+      var f = '/{z}/{x}/{y}.png';
+      var g = '/{z}/{y}/{x}.png';
+
+      var map = L.map( 'map', { attributionControl: false } ).setView( [-37.8, 144.9], 7 );
+
+      var underlays = {
+        "arcgis": L.tileLayer( c + g, { maxZoom: 18 } ).addTo( map )
+      };
+
+      var overlays = {
+        "drawing": L.featureGroup().addTo( map )
+      };
+
+      L.control.layers( underlays, overlays ).addTo( map );
+
+      L.control.draw = function ( options ) {
+        return new L.Control.Draw( options );
+      };
+      L.control.draw( {
+        position: 'topleft',
+        edit: {
+          featureGroup: overlays["drawing"]
+        }
+      } ).addTo( map );
+
+
+      var feature = i.connect( "http://" + document.location.hostname + "/feature", { transports: ['websocket'] } );
+      feature.on( 'created', function ( data ) {
+        console.log( u.inspect( data ) );
+        if ( data.geometry.type == 'Point' ) {
+          toMarker( data );
+        }
+        else if ( data.geometry.type == 'Polygon' ) {
+          toPolygon( data );
+        }
+        else if ( data.geometry.type == 'Polyline' ) {
+          toPolyline( data );
+        }
+      } );
+      feature.on( 'edited', function ( data ) {
+        console.log( u.inspect( data ) );
+        if ( data.geometry.type == 'Point' ) {
+          toMarker( data );
+        }
+        else if ( data.geometry.type == 'Polygon' ) {
+          toPolygon( data );
+        }
+        else if ( data.geometry.type == 'Polyline' ) {
+          toPolyline( data );
+        }
+      } );
+      feature.on( 'deleted', function ( data ) {
+        console.log( u.inspect( data ) );
+      } );
+
+      var toPolygon = function ( json ) {
+        var temp_coords = _.map( json.geometry.coordinates[0], function ( value ) {
+          return [value[1], value[0]];
+        } );
+        overlays["drawing"].addLayer( new L.Polygon( temp_coords.
+            json.properties.options ) );
+      }
+      var fromPolygon = function ( polygon ) {
+        var temp_coords = _.map( polygon.getLatLngs(), function ( value ) {
+          return [value.lng, value.lat];
+        } );
+        json = {
+          type: "Feature",
+          properties: {
+            options: {}
+          },
+          geometry: {
+            type: 'Polygon',
+            coordinates: [temp_coords]
+          }
+        };
+        return json;
+      };
+      var toPolyline = function ( json ) {
+        var temp_coords = _.map( json.geometry.coordinates, function ( value ) {
+          return [value[1], value[0]];
+        } );
+        overlays["drawing"].addLayer( new L.Polyline( temp_coords,
+            json.properties.options ) );
+      }
+      var fromPolyline = function ( polyline ) {
+        var temp_coords = _.map( polyline.getLatLngs(), function ( value ) {
+          return [value.lng, value.lat];
+        } );
+        json = {
+          type: "Feature",
+          properties: {
+            options: {}
+          },
+          geometry: {
+            type: "Polyline",
+            coordinates: temp_coords
+          }
+        };
+        return json;
+      };
+      var toMarker = function ( json ) {
+        overlays["drawing"].addLayer( new L.Marker( [
+          json.geometry.coordinates[1],
+          json.geometry.coordinates[0]
+        ], json.properties.options ) );
+      }
+      var fromMarker = function ( marker ) {
+        return {
+          type: "Feature",
+          properties: {
+            options: {}
+          },
+          geometry: {
+            type: "Point",
+            coordinates: [
+              marker.getLatLng().lng,
+              marker.getLatLng().lat
+            ]
+          }
+        };
+      }
+
+      map.on( 'draw:created', function ( e ) {
+        var type = e.layerType,
+            layer = e.layer;
+        layer.options.title = prompt( "Title" )
+        if ( type === 'marker' ) {
+          feature.emit( 'created', fromMarker( layer ), function ( data ) {
+            layer.options.id = data
+          } );
+        }
+        else if ( type == 'polygon' ) {
+          feature.emit( 'created', fromPolygon( layer ), function ( data ) {
+            layer.options.id = data
+          } );
+        }
+        else if ( type == 'polyline' ) {
+          feature.emit( 'created', fromPolyline( layer ), function ( data ) {
+            layer.options.id = data
+          } );
+        }
+        overlays["drawing"].addLayer( layer );
+      } );
+      map.on( 'draw:edited', function ( e ) {
+        var type = e.layerType,
+            layer = e.layer;
+        if ( type === 'marker' ) {
+          feature.emit( 'edited', fromMarker( layer ) );
+        }
+        else if ( type == 'polygon' ) {
+          feature.emit( 'edited', fromPolygon( layer ) );
+        }
+        else if ( type == 'polyline' ) {
+          feature.emit( 'edited', fromPolyline( layer ) );
+        }
+      } );
+      map.on( 'draw:deleted', function ( e ) {
+        var type = e.layerType,
+            layer = e.layer;
+        if ( type === 'marker' ) {
+          feature.emit( 'deleted', fromMarker( layer ) );
+        }
+        else if ( type == 'polygon' ) {
+          feature.emit( 'deleted', fromPolygon( layer ) );
+        }
+        else if ( type == 'polyline' ) {
+          feature.emit( 'deleted', fromPolyline( layer ) );
+        }
+      } );
+    </script>
+  </body>
+</html>
