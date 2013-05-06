@@ -141,19 +141,26 @@ app.get("/notification", function(req,res) {
   });
 })
 
-app.get("/tracking/:id", function(req,res) {
-  var agent = req.headers['user-agent'];
-  res.render('tracking', {
-    title : 'Tracking',
-    id    : req.params.id,
+app.get("/drawing", function(req,res) {
+  var agent = req.headers['user-agent']
+  res.render('drawing', {
+    title : 'Drawing Demo',
     agent : agent
   });
 })
 
-app.get("/drawing/:id", function(req,res) {
+app.get("/temporal", function(req,res) {
+  var agent = req.headers['user-agent']
+  res.render('temporal', {
+    title : 'Temporal Demo',
+    agent : agent
+  });
+})
+
+app.get("/tracking/:id", function(req,res) {
   var agent = req.headers['user-agent'];
-  res.render('drawing', {
-    title : 'Drawing',
+  res.render('tracking', {
+    title : 'Tracking',
     id    : req.params.id,
     agent : agent
   });
