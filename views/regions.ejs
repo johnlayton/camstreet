@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+
+    <link rel="stylesheet" href="/dist/leaflet.css"/>
+    <!--<link rel="stylesheet" href="/dist/leaflet.dvf.css"/>-->
+    <!--<link rel="stylesheet" href="/dist/camstreet.resources.css"/>-->
+
+    <!--[if lte IE 8]>
+    <link rel="stylesheet" href="/dist/leaflet.ie.css"/>
+    <![endif]-->
+
+    <script src="/dist/leaflet-src.js"></script>
+    <!--<script src="/dist/leaflet.dvf.js"></script>-->
+    <script src="/dist/leaflet.ajax.js"></script>
+
+    <% if ( agent.indexOf( 'Mobile' ) > 0 ) {%>
+    <script src="/dist/cordova-2.3.0.js"></script>
+    <% } else { %>
+    <% } %>
+  </head>
+  <body>
+    <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+    <script src="/browserify"></script>
+    <script>
+      var b = require( 'branding' );
+      var _ = require( 'underscore' );
+      var u = require( 'util' );
+      var $ = require( 'jquery' );
+      var i = require( 'socket.io' );
+    </script>
+    <script>
+
+      var b = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile";
+      var c = "http://" + document.location.hostname + ":8888/";
+
+      var f = '/{z}/{x}/{y}.png';
+      var g = '/{z}/{y}/{x}.png';
+
+      var map = L.map( 'map', { attributionControl: false } )
+          .setView( [-37.8, 144.9], 7 );
+
+      function feat( feature, layer ) {
+        var out = [];
+        if ( feature.properties ) {
+          for ( key in feature.properties ) {
+            out.push( "<dt>" + key + "</dt><dd>" + feature.properties[key] + "</dd> " );
+          }
+          layer.bindPopup( "<div  class='geojson-properties'><span class='title'>Work Centre</span><dl>" +
+                           out.join( "" ) + "</dl></div>" );
+
+          var radiusX = Math.floor( Math.random() * 20 ) + 5;
+          var radiusY = radiusX; //Math.floor(Math.random() * 20);
+          var colorValue = parseInt( feature.properties["RESID4"] ) * 3.6;
+
+          var options = {
+            color: '#000',
+            weight: 1,
+            fillColor: 'hsl(' + colorValue + ',100%,50%)',
+            radiusX: radiusX,
+            radiusY: radiusY,
+
+            fillOpacity: 0.7,
+            rotation: 0.0,
+            position: {
+              x: 0,
+              y: 0
+            },
+            offset: 0
+          };
+
+          // Add a RadialBarChartMarker
+          options.data = {
+            'dataPoint1': Math.random() * 20,
+            'dataPoint2': Math.random() * 20,
+            'dataPoint3': Math.random() * 20,
+            'dataPoint4': Math.random() * 20
+          };
+
+          options.chartOptions = {
+            'dataPoint1': {
+              fillColor: '#FEE5D9',
+              minValue: 0,
+              maxValue: 20,
+              maxHeight: 20,
+              displayText: function ( value ) {
+                return value.toFixed( 2 );
+              }
+            },
+            'dataPoint2': {
+              fillColor: '#FCAE91',
+              minValue: 0,
+              maxValue: 20,
+              maxHeight: 20,
+              displayText: function ( value ) {
+                return value.toFixed( 2 );
+              }
+            },
+            'dataPoint3': {
+              fillColor: '#FB6A4A',
+              minValue: 0,
+              maxValue: 20,
+              maxHeight: 20,
+              displayText: function ( value ) {
+                return value.toFixed( 2 );
+              }
+            },
+            'dataPoint4': {
+              fillColor: '#CB181D',
+              minValue: 0,
+              maxValue: 20,
+              maxHeight: 20,
+              displayText: function ( value ) {
+                return value.toFixed( 2 );
+              }
+            }
+          };
+
+          //new L.PieChartMarker(layer.getLatLng(),options)
+          //new L.RadialBarChartMarker( layer.getLatLng(), options )
+          //new L.BarChartMarker(layer.getLatLng(), options)
+
+          overlays ["workcenres"].addLayer(
+              new L.RadialBarChartMarker( layer.getLatLng(), options )
+          );
+        }
+      }
+
+      L.control.scale( { imperial: false } ).addTo( map );
+
+      var underlays = {
+        //"emap": L.tileLayer( c + 'mapscape' + f, { maxZoom: 18 } ).addTo( map ),
+        "arcgis": L.tileLayer( b + g, { maxZoom: 19 } ).addTo( map )
+      };
+
+      var overlays = {
+        "regions": L.geoJson.ajax( c + 'regions.json', {
+          //onEachFeature: feat
+        } )
+      };
+
+      L.control.layers( underlays, overlays ).addTo( map );
+
+    </script>
+  </body>
+</html>

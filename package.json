@@ -23,6 +23,7 @@
     "mysql"                : "*",
     "ejs"                  : "*",
     "socket.io"            : "*",
+    "socket.io-client"     : "*",
     "socket.io-browserify" : "*",
     "d3"                   : "*",
     "less-middleware"      : "*",
@@ -36,7 +37,9 @@
     "fs-extra"             : "*",
     "geohash"              : "*",
     "ncp"                  : "*",
+    "node-uuid"            : "*",
     "cradle"               : "*",
+    "replify"              : "*",
     "nano"                 : "*"
   },
   "description": "",

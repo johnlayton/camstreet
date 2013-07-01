@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title><%= title %></title>
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+        <link rel="stylesheet" href="/dist/leaflet.css" />
+        <link rel="stylesheet" href="/dist/leaflet.draw.css" />
+        <link rel="stylesheet" href="/dist/leaflet.label.css" />
+        <link rel="stylesheet" href="/dist/camstreet.time.css" />
+
+        <!--[if lte IE 8]>
+        <link rel="stylesheet" href="/dist/leaflet.ie.css" />
+        <link rel="stylesheet" href="/dist/leaflet.draw.ie.css" />
+        <![endif]-->
+
+        <script src="/dist/leaflet-src.js"></script>
+        <script src="/dist/leaflet.draw-src.js"></script>
+        <script src="/dist/leaflet.ajax.js"></script>
+        <script src="/dist/leaflet.label-src.js"></script>
+        <script src="/dist/leaflet-hash.js"></script>
+
+        <link rel="stylesheet" href="/dist/leaflet-search.css" />
+        <script src="/dist/leaflet-search.js"></script>
+
+        <!--<script src="http://maps.google.com/maps/api/js?v=3.2&sensor=false"></script>-->
+        <!--<script src="/dist/leaflet.arcgis-src.js"></script>-->
+        <!--<script src="/dist/leaflet.google-src.js"></script>-->
+
+        <!--<script src="/socket.io/socket.io.js"></script>-->
+
+    <% if ( agent.indexOf( 'Mobile' ) > 0 ) {%>
+        <script src="/dist/cordova-2.3.0.js"></script>
+    <% } else { %>
+    <% } %>
+    </head>
+    <body>
+        <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+        <!--<script src="/dist/bundle.js"></script>-->
+        <script src="/browserify.js"></script>
+        <script>
+                    require('features');
+                    require('branding');
+                    require('time');
+            var _ = require('underscore');
+            var u = require('util');
+            var $ = require('jquery');
+            //var i = io;
+            //var i = require('socket.io-browserify');
+            var i = require('socket.io');
+        </script>
+        <script>
+
+//            var m = 'http://{s}.tile.cloudmade.com/BC9A493B41014CAABB98F0471D759707/997/256';
+//            var m = 'http://{s}.tiles.mapbox.com/v3/examples.map-4l7djmvo';
+//            var m = 'http://{s}.tiles.mapbox.com/v3/mapbox.natural-earth-2'
+//            var m = 'http://oatile1.mqcdn.com/naip'
+//            var m = 'http://otile1.mqcdn.com/tiles/1.0.0/osm/'
+//            var m = "http://" + document.location.hostname + ":4000/database/gis_example/table/planet_osm_line";
+
+
+                    //http://emap.dse.vic.gov.au/ArcGIS/rest/services/mapscape/MapServer/tile/4/9/10
+            var a = "http://emap.dse.vic.gov.au/ArcGIS/rest/services/mapscape/MapServer/tile";
+            //var b = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/";
+
+            var c = "http://" + document.location.hostname + ":8888/";
+
+            ///?request=GetMap&version=1.3.0&styles=&crs=CRS:84&width=256&height=256&format=image/png;mode=32bit&transparent=true&layers=2/T_SFC
+            //var d = "http://" + document.location.hostname + ":9090/ncwms/wms";
+            var d = "http://192.168.1.20:9090/ncwms/wms";
+            var f = '/{z}/{x}/{y}.png';
+            var g = '/{z}/{y}/{x}.png';
+
+            var j = "http://emap.dse.vic.gov.au/ArcGIS/rest/services/mapscape/MapServer/export";
+            var k = "http://devgeocortex01.fire.dse.vic.gov.au/ArcGIS/rest/services/mapscape/MapServer/export";
+
+            var l = "http://" + document.location.hostname + ":8888/json/";
+
+            var map = L.map('map',{ attributionControl: false,
+                                    timeControl: true })
+                       .setView([-37.8, 144.9], 7);
+
+            L.control.scale({ imperial: false }).addTo(map);
+            //var hash = new L.Hash(map);
+            L.hash(map);
+
+            //L.tileLayer(m + f, { maxZoom: 18 }).addTo(map);
+            //L.tileLayer(v + f, { maxZoom: 18, opacity: 0.25 }).addTo(map);
+
+            //var map = new L.Map('map', { center: new L.LatLng(-37.8, 144.9), zoom: 10} );
+            //var googleLayer = new L.Google('ROADMAP');
+            //map.addLayer(new L.Google('ROADMAP'));
+
+            //ArcGIS Dynamic Layer
+            //var emap = new L.AgsDynamicLayer('http://ags2.dtsagile.com/ArcGIS/rest/services/LiveFeeds/WxMappr/MapServer',
+            //var emap = new L.AgsDynamicLayer('http://emap.dse.vic.gov.au/ArcGIS/rest/services/mapscape/MapServer',
+            //  {
+            //      maxZoom: 19,
+            //      attribution: "NOAA",
+            //      opacity: 0.5,
+            //      layers: 'show:2'
+            //  });
+            //map.addLayer(windLayer);
+
+            var underlays = {
+                //"example"  : L.tileLayer(m + f, { maxZoom: 18 }).addTo(map),
+                //"contour"  : L.tileLayer(v + f, { maxZoom: 18 }).addTo(map),
+                //"station"  : L.tileLayer(s + f, { maxZoom: 18 }).addTo(map),
+                "arcgis"   : L.tileLayer(a + g, { maxZoom: 18 }).addTo(map),
+                //"mapscape" : L.tileLayer(c + 'mapscape' + f, { maxZoom: 18 }).addTo(map),
+                "relief"   : L.tileLayer(c + 'relief' + f, { maxZoom: 18 }).addTo(map)
+                //"hybrid"   : L.tileLayer(c + 'vicmapimageryhybrid' + f, { maxZoom: 18 }).addTo(map),
+                //"street"   : L.tileLayer(b + g, { maxZoom: 19 }).addTo(map)
+                //"google"   : new L.Google('ROAD')
+                /*
+                "emap"  : L.tileLayer.wms( j, {
+                    bboxsr  : 4326,
+                    imagesr : 3857,
+                    size    : "256,256",
+                    format  : "PNG8",
+                    f       : "image",
+                    layers  : "show:1",
+                    transparent : true
+                }),
+                */
+                /*
+                "geocortex"  : L.tileLayer.wms( k, {
+                  bboxsr  : 4326,
+                  imagesr : 3857,
+                  size    : "256,256",
+                  format  : "PNG8",
+                  f       : "image",
+                  layers  : "show:1",
+                  transparent : true
+                })
+                */
+            };
+
+            function feat( feature, layer ){
+              var out = [];
+              if (feature.properties){
+                for(key in feature.properties){
+                  out.push(key+": "+feature.properties[key]);
+                }
+                layer.bindPopup(out.join("<br />"));
+              }
+            }
+
+            var overlays = {
+                //"marker"   : marker,
+                //"roads"    : roadsLayer,
+                //"roads"    : L.tileLayer(c + 'roads' + f, { maxZoom: 18, opacity: 0.3 }).addTo(map),
+                //"rails"    : L.tileLayer(c + 'rails' + f, { maxZoom: 18, opacity: 0.3 }).addTo(map),
+                //"relief"   : L.tileLayer(c + 'relief' + f, { maxZoom: 18, opacity: 0.3 }).addTo(map),
+                //"all"      : L.tileLayer(c + 'australia' + f, { maxZoom: 18, opacity: 0.3 }).addTo(map)
+                //"weather"  : L.tileLayer(c + 'weather' + f, { maxZoom: 18 }).addTo(map),
+                //"scans"    : L.tileLayer(c + 'firescans' + f, { maxZoom: 18 }).addTo(map),
+                //"infra"    : L.tileLayer(c + 'fire_infrastructure' + f, { maxZoom: 18 }).addTo(map),
+                //"roads"    : L.tileLayer(c + 'roads' + f, { maxZoom: 18 }).addTo(map),
+                //"rails"    : L.tileLayer(c + 'rails' + f, { maxZoom: 18 }).addTo(map),
+                //"contours" : L.tileLayer(c + 'contours' + f, { maxZoom: 18 }).addTo(map),
+                //"peaks"    : L.tileLayer(c + 'peaks' + f, { maxZoom: 18 }).addTo(map),
+                //"fires"    : L.tileLayer(c + 'fires' + f, { maxZoom: 18 }).addTo(map),
+                //"airfields"    : L.tileLayer(c + 'airfields' + f, { maxZoom: 18 }).addTo(map),
+                "airfields" : L.geoJson.ajax(c + 'airfields.json', {
+                  onEachFeature: feat
+                  //dataType:"jsonp"
+                }),
+                //"ffdi"     : L.tileLayer(c + 'ffdi' + f, { maxZoom: 18, opacity: 0.3 }).addTo(map),
+                //"temp"     : L.tileLayer(c + 'temp' + f, { maxZoom: 18, opacity: 0.3 }).addTo(map),
+                /*
+                "ffdi"     : L.tileLayer.wms(d, {
+                    service: 'wms',
+                    crs: 'CRS:84',
+                    time: new Date(2012, 11, 08).toISOString(),
+                    request: 'GetMap',
+                    version: '1.3.0',
+                    layers: '1/FFDI_SFC',
+                    styles: '',
+                    opacity: 0.3,
+                    format: 'image/png;mode=32bit',
+                    transparent: true
+                }).addTo(map),
+                "temp"     : L.tileLayer.wms(d, {
+                    service: 'wms',
+                    crs: 'CRS:84',
+                    //time: '2013-03-08T18:00:00.000Z',
+                    time: new Date(2013, 02, 07).toISOString(),
+                    request: 'GetMap',
+                    version: '1.3.0',
+                    layers: '2/T_SFC',
+                    styles: '',
+                    opacity: 0.3,
+                    format: 'image/png;mode=32bit',
+                    transparent: true
+                }).addTo(map),
+                */
+                "drawing"  : L.featureGroup().addTo(map)
+            };
+
+            L.control.layers(underlays, overlays).addTo(map);
+
+            //var drawControl = new L.Control.Draw();
+            //map.addControl(drawControl);
+
+            /*
+             L.control.layers = function (baseLayers, overlays, options) {
+                 return new L.Control.Layers(baseLayers, overlays, options);
+             };
+            */
+            L.control.draw = function(options) {
+                return new L.Control.Draw(options);
+            };
+            L.control.draw({
+               position: 'topleft',
+               edit: {
+                   featureGroup: overlays["drawing"]
+               }
+            } ).addTo(map);
+
+
+            //L.control.search = function(options) {
+            //    return new L.Control.Search(options);
+            //};
+            L.control.search({
+                position: 'topright',
+                layer: overlays["drawing"]
+            } ).addTo(map);
+
+            var view = i.connect("http://" + document.location.hostname + "/view", { transports: ['websocket'] });
+            view.on('update', function(data) {
+                moving = true;
+                map.setView( [ data.latitude, data.longitude ], data.zoom )
+                moving = false;
+            });
+            view.on('connect', function(){
+                moving = false;
+                map.on("moveend", function(themap) {
+                    var center = themap.target.getCenter(),
+                        zoom = themap.target.getZoom(),
+                        precision = Math.max(0, Math.ceil(Math.log(zoom) / Math.LN2));
+                    if ( !moving )
+                    {
+                        view.emit('update', {
+                            zoom: zoom,
+                            latitude: center.lat.toFixed(precision),
+                            longitude: center.lng.toFixed(precision)
+                        });
+                    }
+                }, this);
+            });
+
+            var feature = i.connect("http://" + document.location.hostname + "/feature", { transports: ['websocket'] });
+            feature.on('created', function( data ) {
+                console.log( u.inspect( data ) );
+                if ( data.geometry.type == 'Point' ) {
+                    toMarker( data );
+                } else if ( data.geometry.type == 'Polygon' ) {
+                    toPolygon( data );
+                } else if ( data.geometry.type == 'Polyline' ) {
+                    toPolyline( data );
+                }
+            });
+            feature.on('edited', function( data ) {
+                console.log( u.inspect( data ) );
+                if ( data.geometry.type == 'Point' ) {
+                    toMarker( data );
+                } else if ( data.geometry.type == 'Polygon' ) {
+                    toPolygon( data );
+                } else if ( data.geometry.type == 'Polyline' ) {
+                    toPolyline( data );
+                }
+            });
+            feature.on('deleted', function( data ) {
+                console.log( u.inspect( data ) );
+            });
+
+            var toPolygon = function( json ) {
+                var temp_coords = _.map(json.geometry.coordinates[0], function(value) {
+                    return [value[1], value[0]];
+                });
+                overlays["drawing"].addLayer( new L.Polygon( temp_coords.
+                                                             json.properties.options ));
+            }
+            var fromPolygon = function( polygon ) {
+                var temp_coords = _.map(polygon.getLatLngs(), function(value) {
+                    return [value.lng, value.lat];
+                });
+                json = {
+                    type: "Feature",
+                    properties: {
+                        options: {}
+                    },
+                    //properties: {
+                    //    options: polygon.options
+                    //},
+                    geometry: {
+                        type: 'Polygon',
+                        coordinates: [temp_coords]
+                    }
+                };
+                return json;
+            };
+            var toPolyline = function( json ) {
+                var temp_coords = _.map(json.geometry.coordinates, function(value) {
+                    return [value[1], value[0]];
+                });
+                overlays["drawing"].addLayer( new L.Polyline( temp_coords,
+                                                              json.properties.options ));
+            }
+            var fromPolyline = function( polyline) {
+                var temp_coords = _.map(polyline.getLatLngs(), function(value) {
+                    return [value.lng, value.lat];
+                });
+                json = {
+                    type: "Feature",
+                    properties: {
+                        options: {}
+                    },
+                    //properties: {
+                    //    options: polyline.options
+                    //},
+                    geometry: {
+                        type: "Polyline",
+                        coordinates: temp_coords
+                    }
+                };
+                return json;
+            };
+            var toMarker = function( json ) {
+                overlays["drawing"].addLayer( new L.Marker( [
+                    json.geometry.coordinates[1],
+                    json.geometry.coordinates[0]
+                ], json.properties.options ));
+            }
+            var fromMarker = function( marker ) {
+                return {
+                    type: "Feature",
+                    properties: {
+                        options: {}
+                    },
+                    //properties: {
+                    //    options: marker.options
+                    //},
+                    geometry: {
+                        type: "Point",
+                        coordinates: [
+                            marker.getLatLng().lng,
+                            marker.getLatLng().lat
+                        ]
+                    }
+                };
+            }
+
+            map.on('draw:created', function (e) {
+                var type = e.layerType,
+                    layer = e.layer;
+                layer.options.title = prompt("Title")
+                //layer.bindPopup(prompt("Id"));
+                if (type === 'marker') {
+                    feature.emit('created', fromMarker( layer ), function( data ) {
+                        layer.options.id = data
+                    } );
+                } else if (type == 'polygon') {
+                    feature.emit('created', fromPolygon( layer ), function( data ) {
+                        layer.options.id = data
+                    } );
+                } else if (type == 'polyline') {
+                    feature.emit('created', fromPolyline( layer ), function( data ) {
+                        layer.options.id = data
+                    } );
+                }
+                overlays["drawing"].addLayer(layer);
+            });
+            map.on('draw:edited', function (e) {
+                var type = e.layerType,
+                    layer = e.layer;
+                if (type === 'marker') {
+                    feature.emit('edited', fromMarker( layer ) );
+                } else if (type == 'polygon') {
+                    feature.emit('edited', fromPolygon( layer ) );
+                } else if (type == 'polyline') {
+                    feature.emit('edited', fromPolyline( layer ) );
+                }
+            });
+            map.on('draw:deleted', function (e) {
+                var type = e.layerType,
+                   layer = e.layer;
+                if (type === 'marker') {
+                    feature.emit('deleted', fromMarker( layer ) );
+                } else if (type == 'polygon') {
+                    feature.emit('deleted', fromPolygon( layer ) );
+                } else if (type == 'polyline') {
+                    feature.emit('deleted', fromPolyline( layer ) );
+                }
+            });
+
+            var assets = {};
+            var asset = i.connect("http://" + document.location.hostname + "/asset", { transports: ['websocket'] });
+            asset.on('connect', function(){
+                //asset.emit('identity', prompt('Identity'), function( message ){
+                asset.emit('identity', '<%= id %>', function( message ){
+                    navigator.geolocation.watchPosition(
+                        function( position ) {
+                            asset.emit( "position", position );
+                            if (!assets['home']) {
+                                assets['home'] = new L.Marker([ position.coords.latitude,
+                                                                position.coords.longitude ]);
+                                assets['home'].addTo(map);
+                            } else {
+                                assets['home'].setLatLng([ position.coords.latitude,
+                                                           position.coords.longitude ])
+                            }
+                        },
+                        function( error ) {
+                            console.log( error );
+                        }
+                    );
+                    /*
+                    setInterval(function() {
+                        navigator.geolocation.getCurrentPosition(
+                            function( position ) {
+
+                                //console.log( u.inspect( position ) );
+
+                                asset.emit( "position", position );
+                                if (!assets['home']) {
+                                    assets['home'] = new L.Marker([ position.coords.latitude,
+                                                                    position.coords.longitude ]);
+                                    assets['home'].bindPopup('<p>hello<ol><li>husdhuhf</li></ol></p>').addTo(map);
+                                    //assets['home'].addTo(map);
+                                } else {
+                                    assets['home'].setLatLng([ position.coords.latitude,
+                                                               position.coords.longitude ])
+                                }
+                            },
+                            function( err ) {
+                                console.log( err );
+                            }
+                        );
+                    }, 1000);
+                    */
+                });
+                asset.on('position', function(data){
+                    if (!assets[data.identity]) {
+                        assets[data.identity] = new L.Marker([ data.position.coords.latitude,
+                                                               data.position.coords.longitude ]);
+                        assets[data.identity].addTo(map);
+                    //    if ( window.webkitNotifications.checkPermission() == 0) {
+                    //        alert = window.webkitNotifications.createNotification('icon.png', 'New Asset', 'Named ' + data.identity);
+                    //        alert.show();
+                    //    }
+                    } else {
+                        assets[data.identity].setLatLng([ data.position.coords.latitude,
+                                                          data.position.coords.longitude ])
+                    }
+                });
+            });
+        </script>
+    </body>
+</html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <script src="/dist/webrtc-client.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+  </head>
+  <body>
+    <script src="/browserify"></script>
+    <script>
+      //var io = require('socket.io');
+    </script>
+    <div id="localVideo"></div>
+    <div id="remotesVideos"></div>
+    <script>
+      var webrtc = new WebRTC( {
+        log: true,
+        localVideoEl: 'localVideo',
+        remoteVideosEl: 'remotesVideos',
+        autoRequestMedia: true,
+        url: "http://" + document.location.hostname + ":8080/conference"
+      } );
+      webrtc.on('readyToCall', function () {
+        webrtc.joinRoom('<%= room %>');
+      });
+    </script>
+  </body>
+</html>

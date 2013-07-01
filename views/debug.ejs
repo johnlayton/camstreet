@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <% if ( agent.indexOf( 'Mobile' ) > 0 ) {%>
+    <script src="/dist/cordova-2.3.0.js"></script>
+    <% } else { %>
+    <% } %>
+    <style>
+      body {
+        font-family: courier;
+      }
+
+      ul {
+        list-style-type: none;
+      }
+
+      .enter {
+        background-color: white;
+        color: darkgreen;
+      }
+
+      .enter:before {
+        content: "enter ->  ";
+        position: relative;
+        left: -5px;
+      }
+
+      .exit {
+        background-color: white;
+        color: darkred;
+      }
+
+      .exit:before {
+        content: "exit ->  ";
+        position: relative;
+        left: -5px;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div>
+      <ul id="conference"></ul>
+    </div>
+    <script src="/browserify"></script>
+    <script>
+      var _ = require( 'underscore' );
+      var u = require( 'util' );
+      var $ = require( 'jquery' );
+      var i = require( 'socket.io' );
+    </script>
+    <script>
+      var debug = function( title, message ) {
+        var fill = "========================================================";
+        var line = "==========${title}==========";
+        var date = new Date().toLocaleTimeString();
+
+        var header = line.replace( "${title}", " " + title + " " + date + " " );
+        var footer = line.replace( "${title}", fill.substring( 0, title.length + date.length + 3 ) );
+
+        util.debug( header.blue );
+        util.debug( message.blue )
+        util.debug( footer.blue );
+      }
+
+      var error = function( title, message ) {
+        var fill = "========================================================";
+        var line = "==========${title}==========";
+        var date = new Date().toLocaleTimeString();
+
+        var header = line.replace( "${title}", " " + title + " " + date + " " );
+        var footer = line.replace( "${title}", fill.substring( 0, title.length + date.length + 3 ) );
+
+        util.debug( header.red );
+        util.debug( message.red )
+        util.debug( footer.red );
+      }
+
+      var conference = i.connect( "http://" + document.location.hostname + "/conference",
+          { transports: ['websocket'] } );
+      conference.on( 'enter', function ( data ) {
+        $( '#conference' ).append( "<li class='enter'>" + u.inspect( data ) + "</ul>" );
+      } );
+      conference.on( 'exit', function ( data ) {
+        $( '#conference' ).append( "<li class='exit'>" + u.inspect( data ) + "</ul>" );
+      } );
+    </script>
+  </body>
+</html>

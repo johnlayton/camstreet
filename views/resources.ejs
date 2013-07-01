@@ -6,13 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 
     <link rel="stylesheet" href="/dist/leaflet.css"/>
-    <link rel="stylesheet" href="/dist/camstreet.coverage.css"/>
+    <link rel="stylesheet" href="/dist/leaflet.dvf.css"/>
+    <link rel="stylesheet" href="/dist/camstreet.resources.css"/>
 
     <!--[if lte IE 8]>
     <link rel="stylesheet" href="/dist/leaflet.ie.css"/>
     <![endif]-->
 
     <script src="/dist/leaflet-src.js"></script>
+    <script src="/dist/leaflet.dvf.js"></script>
     <script src="/dist/leaflet.ajax.js"></script>
 
     <% if ( agent.indexOf( 'Mobile' ) > 0 ) {%>
@@ -25,7 +27,6 @@
     <script src="/browserify"></script>
     <script>
       var b = require( 'branding' );
-      var c = require( 'coverage' );
       var m = require( 'markers' );
       var _ = require( 'underscore' );
       var u = require( 'util' );
@@ -33,20 +34,7 @@
       var i = require( 'socket.io' );
     </script>
     <script>
-      m( {
-        point: function( geojson, latlng ) {
-          console.log( u.inspect( geojson ) );
-          if ( geojson.properties['TYPENAME6'] === 'AIRFIELD') {
-            return new L.Marker( latlng );
-          }
-          if ( geojson.properties['TYPENAME6'] === 'HELIPAD' ) {
-            return new L.CircleMarker( latlng );
-          }
-          if ( geojson.properties['TYPENAME6'] === 'STAGING AREA'  ){
-            return new L.CircleMarker( latlng );
-          }
-        }
-      } );
+
       var b = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile";
       var c = "http://" + document.location.hostname + ":8888/";
 
@@ -56,43 +44,71 @@
       var map = L.map( 'map', { attributionControl: false } )
           .setView( [-37.8, 144.9], 7 );
 
+      function feat( type ) {
+        return function ( feature, layer ) {
+          var out = [];
+          if ( feature.properties ) {
+
+            var resources = [ "Person", "PassVeh", "Tanker", "Dozer" ];
+
+            _.each( resources, function ( key ) {
+              feature.properties[key + "_T"] = 200;
+              feature.properties[key + "_A"] = 190;
+              feature.properties[key + "_D"] = 0.95;
+            } );
+
+            for ( key in feature.properties ) {
+              out.push( "<dt>" + key + "</dt><dd>" + feature.properties[key] + "</dd> " );
+            }
+
+            layer.bindPopup( "<div  class='geojson-properties'>" +
+                             "<span class='title'>Work Centre</span>" +
+                             "<dl>" + out.join( "" ) + "</dl>" +
+                             "</div>" );
+
+            _.each( resources, function ( key, index ) {
+              var options = {
+                color: '#000',
+                weight: 1,
+                fillColor: 'hsl(' + 20 * index + ',100%,50%)',
+                radiusX: 10,
+                radiusY: 10,
+                fillOpacity: 0.7,
+                rotation: 0.0,
+                position: {
+                  x: 0,
+                  y: 0
+                },
+                offset: 0
+              };
+
+
+              overlays[type].addLayer(
+                  new L.RadialBarChartMarker( layer.getLatLng(), options )
+              );
+            } );
+          }
+        }
+      }
+
       L.control.scale( { imperial: false } ).addTo( map );
 
       var underlays = {
-        "emap"   : L.tileLayer( c + 'mapscape' + f, { maxZoom: 18 } ).addTo( map ),
-        "arcgis" : L.tileLayer( b + g, { maxZoom: 19 } ).addTo( map )
+        //"emap": L.tileLayer( c + 'mapscape' + f, { maxZoom: 18 } ).addTo( map ),
+        "arcgis": L.tileLayer( b + g, { maxZoom: 19 } ).addTo( map )
       };
 
       var overlays = {
-        "airfields": L.geoJson.coverage( c + 'airfields.json', {
-          title: 'Airfields',
-          val: 100,
-          onEachFeature: feature( 'Airfield' ) } ).addTo( map ),
-        "helipads": L.geoJson.coverage( c + 'helipads.json', {
-          title: 'Helipads',
-          onEachFeature: feature( 'Helipad' ) } ).addTo( map ),
-        "staging": L.geoJson.coverage( c + 'staging.json', {
-          title: 'Staging Area',
-          onEachFeature: feature( 'Staging Area' ) } ).addTo( map )
+        "workcentres": L.geoJson.ajax( c + 'workcentres.json', {
+          onEachFeature: feat( "workcentres" )
+        } ),
+        "icc": L.geoJson.ajax( c + 'icc.json', {
+          onEachFeature: feat( "icc" )
+        } )
       };
 
       L.control.layers( underlays, overlays ).addTo( map );
 
-      function feature( type ) {
-        return function ( feature, layer ) {
-          var out = [];
-          if ( feature.properties ) {
-            for ( key in feature.properties ) {
-              out.push( "<dt>" + key + "</dt><dd>" + feature.properties[key] + "</dd> " );
-            }
-            layer.bindPopup( "<div  class='geojson-properties'>" +
-                             "<span class='title'>" + type + "</span>" +
-                             "<dl>" + out.join( "" ) + "</dl>" +
-                             "</div>" );
-            layer.options.title = feature.properties['DESC4'];
-          }
-        };
-      }
     </script>
   </body>
 </html>

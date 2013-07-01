@@ -12,7 +12,6 @@
     <![endif]-->
 
     <script src="/dist/leaflet-src.js"></script>
-    <script src="/dist/wax.leaf.js"></script>
 
     <% if ( agent.indexOf( 'Mobile' ) > 0 ) {%>
     <script src="/dist/cordova-2.3.0.js"></script>
@@ -30,22 +29,28 @@
       var i = require( 'socket.io' );
     </script>
     <script>
-      //var map = new L.Map( 'map' )
-      //    .setView( new L.LatLng( -37, 144 ), 9 );
-      var map = new L.Map( 'map' );
+      var b = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile";
+      var c = "http://" + document.location.hostname + ":8888/";
 
-      //wax.tilejson( 'http://' + document.location.hostname + ':8888/relief.jsonp',
-      //    function ( tilejson ) {
-      //      map.setView( new L.LatLng( -37, 144 ), 9 );
-      //      map.addLayer( new wax.leaf.connector( tilejson ) );
-      //    }
-      //);
-      wax.tilejson( 'http://api.tiles.mapbox.com/v2/mapbox.geography-class.jsonp',
-          function ( tilejson ) {
-            map.addLayer( new wax.leaf.connector( tilejson ) );
-            map.setView( new L.LatLng( -37, 144 ), 9 );
-          }
-      );
+      var f = '/{z}/{x}/{y}.png';
+      var g = '/{z}/{y}/{x}.png';
+
+      var map = L.map( 'map', { attributionControl: false } )
+          .setView( [-37.8, 144.9], 7 );
+
+      L.control.scale( { imperial: false } ).addTo( map );
+
+      var underlays = {
+        "relief": L.tileLayer( c + 'relief' + f, { maxZoom: 18 } ).addTo( map )
+      };
+
+      var overlays = {
+        "contours": L.tileLayer( c + 'contours' + f, { maxZoom: 18 } ).addTo( map ),
+        "peaks": L.tileLayer( c + 'peaks' + f, { maxZoom: 18 } ).addTo( map )
+      };
+
+      L.control.layers( underlays, overlays ).addTo( map );
+
     </script>
   </body>
 </html>
