@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 
     <link rel="stylesheet" href="/dist/leaflet.css"/>
-    <link rel="stylesheet" href="/dist/camstreet.coverage.css"/>
+    <link rel="stylesheet" href="/dist/leaflet-search.css" />
 
     <!--[if lte IE 8]>
     <link rel="stylesheet" href="/dist/leaflet.ie.css"/>
@@ -14,6 +14,7 @@
 
     <script src="/dist/leaflet-src.js"></script>
     <script src="/dist/leaflet.ajax.js"></script>
+    <script src="/dist/leaflet-search.js"></script>
 
     <% if ( agent.indexOf( 'Mobile' ) > 0 ) {%>
     <script src="/dist/cordova-2.3.0.js"></script>
@@ -25,28 +26,12 @@
     <script src="/browserify"></script>
     <script>
       var b = require( 'branding' );
-      var c = require( 'coverage' );
-      var m = require( 'markers' );
       var _ = require( 'underscore' );
       var u = require( 'util' );
       var $ = require( 'jquery' );
       var i = require( 'socket.io' );
     </script>
     <script>
-      m( {
-        point: function ( geojson, latlng ) {
-          console.log( u.inspect( geojson ) );
-          if ( geojson.properties['TYPENAME6'] === 'AIRFIELD' ) {
-            return new L.Marker( latlng );
-          }
-          if ( geojson.properties['TYPENAME6'] === 'HELIPAD' ) {
-            return new L.CircleMarker( latlng );
-          }
-          if ( geojson.properties['TYPENAME6'] === 'STAGING AREA' ) {
-            return new L.CircleMarker( latlng );
-          }
-        }
-      } );
       var b = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile";
       var c = "http://" + document.location.hostname + ":8888/";
 
@@ -59,20 +44,23 @@
       L.control.scale( { imperial: false } ).addTo( map );
 
       var underlays = {
-        "emap": L.tileLayer( c + 'mapscape' + f, { maxZoom: 18 } ).addTo( map ),
-        "arcgis": L.tileLayer( b + g, { maxZoom: 19 } ).addTo( map )
+        "emap"   : L.tileLayer( c + 'mapscape' + f, { maxZoom: 18 } ).addTo( map ),
+        "arcgis" : L.tileLayer( b + g, { maxZoom: 19 } ).addTo( map )
       };
 
       var overlays = {
-        "airfields": L.geoJson.coverage( c + 'airfields.json',
-            { title: 'Airfields', val: 100, onEachFeature: feature( 'Airfield' ) } ).addTo( map ),
-        "helipads": L.geoJson.coverage( c + 'helipads.json',
-            { title: 'Helipads', onEachFeature: feature( 'Helipad' ) } ).addTo( map ),
-        "staging area": L.geoJson.coverage( c + 'staging.json',
-            { title: 'Staging Area', onEachFeature: feature( 'Staging Area' ) } ).addTo( map )
+        "airfields": L.geoJson.ajax( c + 'airfields.json', {
+          title: 'Airfields',
+          val: 100,
+          onEachFeature: feature( 'Airfield' ) } ).addTo( map )
       };
 
       L.control.layers( underlays, overlays ).addTo( map );
+
+      L.control.search({
+        position: 'topright',
+        layer: overlays["airfields"]
+      } ).addTo(map);
 
       function feature( type ) {
         return function ( feature, layer ) {

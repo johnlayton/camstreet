@@ -130,6 +130,7 @@
               data: {},
               chartOptions: {}
             }
+
             _.each( [ "Person", "PassVeh", "Tanker", "Dozer" ], function ( resource, index ) {
               optionsT.data[ resource ] = Math.ceil( Math.log( parseInt( feature.properties[resource + "_T"] ) ) ) * 5;
               optionsT.chartOptions[ resource ] = {
@@ -154,14 +155,12 @@
 
             } );
 
-
             //overlays[type].addLayer( new L.BarChartMarker( layer.getLatLng(), optionsT ) );
             //overlays[type].addLayer( new L.BarChartMarker( layer.getLatLng(), optionsA ) );
 
             //new L.PieChartMarker(layer.getLatLng(),options)
             //new L.RadialBarChartMarker( layer.getLatLng(), options )
             //new L.BarChartMarker(layer.getLatLng(), options)
-
           }
         }
       }

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+
+    <link rel="stylesheet" href="/dist/leaflet.css"/>
+
+    <!--[if lte IE 8]>
+    <link rel="stylesheet" href="/dist/leaflet.ie.css"/>
+    <![endif]-->
+
+    <script src="/dist/leaflet-src.js"></script>
+    <script src="/dist/leaflet-hash.js"></script>
+
+    <% if ( agent.indexOf( 'Mobile' ) > 0 ) {%>
+    <script src="/dist/cordova-2.3.0.js"></script>
+    <% } else { %>
+    <% } %>
+  </head>
+  <body>
+    <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+    <script src="/browserify"></script>
+    <script>
+      var b = require( 'branding' );
+      var _ = require( 'underscore' );
+      var u = require( 'util' );
+      var $ = require( 'jquery' );
+      var i = require( 'socket.io' );
+    </script>
+    <script>
+
+      var zxy = '/{z}/{x}/{y}.png';
+      var zyx = '/{z}/{y}/{x}.png';
+
+      var map = L.map( 'map', { attributionControl: false } )
+          .setView( [-37.8, 144.9], 7 );
+
+      L.control.scale( { imperial: false } ).addTo( map );
+
+      //var a = "http://emap.dse.vic.gov.au/ArcGIS/rest/services/mapscape/MapServer/tile";
+      var a = "http://" + document.location.hostname + ":8888/mapscape";
+      var b = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile";
+      var c = 'http://{s}.tile.cloudmade.com/e0af551416644a24b2c8049eb8d34842/1/256';
+      var d = 'http://{s}.tile.cloudmade.com/e0af551416644a24b2c8049eb8d34842/1/88327';
+      var e = 'http://{s}.tiles.mapbox.com/v3/examples.map-4l7djmvo';
+      var f = 'http://{s}.tiles.mapbox.com/v1/mapbox.natural-earth-1'
+      var g = 'http://otile1.mqcdn.com/tiles/1.0.0/map';
+      var h = 'http://otile1.mqcdn.com/tiles/1.0.0/sat';
+      var i = 'http://otile1.mqcdn.com/tiles/1.0.0/osm';
+
+      var underlays = {
+        "emap"        : L.tileLayer( a + zxy, { maxZoom: 18 } ).addTo( map ),
+        "arcgis"      : L.tileLayer( b + zyx, { maxZoom: 19 } ).addTo( map ),
+        "cloudmade 1" : L.tileLayer( c + zxy, { maxZoom: 19 } ).addTo( map ),
+        "cloudmade 2" : L.tileLayer( d + zxy, { maxZoom: 19 } ).addTo( map ),
+        "mapbox 1"    : L.tileLayer( e + zxy, { maxZoom: 19 } ).addTo( map ),
+        "mapbox 2"    : L.tileLayer( f + zxy, { maxZoom: 19 } ).addTo( map ),
+        "mqcdn 1"     : L.tileLayer( g + zxy, { maxZoom: 19 } ).addTo( map ),
+        "mqcdn 2"     : L.tileLayer( h + zxy, { maxZoom: 19 } ).addTo( map ),
+        "mqcdn 3"     : L.tileLayer( i + zxy, { maxZoom: 19 } ).addTo( map )
+      };
+
+      L.control.layers( underlays, {} ).addTo( map );
+      L.control.scale({ imperial: false }).addTo(map);
+      L.hash(map);
+
+    </script>
+  </body>
+</html>

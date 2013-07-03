@@ -38,6 +38,7 @@
     "geohash"              : "*",
     "ncp"                  : "*",
     "node-uuid"            : "*",
+    "colors"               : "*",
     "cradle"               : "*",
     "replify"              : "*",
     "nano"                 : "*"

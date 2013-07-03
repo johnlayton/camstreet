@@ -8,7 +8,8 @@ var connect = require( 'connect' )
   , oppressor = require( 'oppressor' )
   , _ = require( 'underscore' )
   , uuid = require( 'node-uuid' )
-  , http = require( 'http' );
+  , http = require( 'http' )
+  , colors = require( 'colors' );
 
 var nano = require( 'nano' )( 'http://localhost:5984' );
 var db_name = "places";
@@ -190,6 +191,22 @@ app.get( "/following", function ( req, res ) {
   } );
 } )
 
+app.get( "/hashing", function ( req, res ) {
+  var agent = req.headers['user-agent']
+  res.render( 'hashing', {
+    title: 'Hashing  Demo',
+    agent: agent
+  } );
+} )
+
+app.get( "/search", function ( req, res ) {
+  var agent = req.headers['user-agent']
+  res.render( 'search', {
+    title: 'Search  Demo',
+    agent: agent
+  } );
+} )
+
 app.get( "/resources", function ( req, res ) {
   var agent = req.headers['user-agent']
   res.render( 'resources', {
@@ -197,6 +214,23 @@ app.get( "/resources", function ( req, res ) {
     agent: agent
   } );
 } )
+
+app.get( "/baselayers", function ( req, res ) {
+  var agent = req.headers['user-agent']
+  res.render( 'baselayers', {
+    title: 'Base Layers  Demo',
+    agent: agent
+  } );
+} )
+
+app.get( "/tracking", function( req, res ) {
+  var agent = req.headers['user-agent'];
+  res.render( 'tracking', {
+    title: 'Tracking',
+    id: uuid(),
+    agent: agent
+  } );
+})
 
 app.get( "/tracking/:id", function ( req, res ) {
   var agent = req.headers['user-agent'];
@@ -207,11 +241,29 @@ app.get( "/tracking/:id", function ( req, res ) {
   } );
 } )
 
+app.get( "/conference", function ( req, res ) {
+  var agent = req.headers['user-agent'];
+  res.render( 'conference', {
+    title: 'Conference',
+    name: uuid(),
+    agent: agent
+  } );
+} )
+
 app.get( "/conference/:name", function ( req, res ) {
   var agent = req.headers['user-agent'];
   res.render( 'conference', {
     title: 'Conference',
     name: req.params.name,
+    agent: agent
+  } );
+} )
+
+app.get( "/room", function ( req, res ) {
+  var agent = req.headers['user-agent']
+  res.render( 'room', {
+    title: 'Room ' + req.params.room,
+    room: uuid(),
     agent: agent
   } );
 } )
@@ -260,12 +312,12 @@ io.of( '/asset' ).on( 'connection', function ( socket ) {
       func();
     } );
   } );
-  socket.on( 'position', function ( position ) {
+  socket.on( 'position', function ( data ) {
     debug( "position", util.inspect( data ) );
     socket.get( 'identity', function ( error, identity ) {
       socket.broadcast.emit( 'position', {
         identity: identity,
-        position: position
+        position: data
       } );
     } )
   } );
@@ -273,12 +325,12 @@ io.of( '/asset' ).on( 'connection', function ( socket ) {
 
 io.of( '/feature' ).on( 'connection', function ( socket ) {
   socket.on( 'created', function ( data, func ) {
-    debug( "created", util.inspect( data ) );
     db.insert( data, function ( err, body, headers ) {
       if ( err ) {
         if ( err.message === 'no_db_file' ) {
           return nano.db.create( db_name, function () {
-            insert_doc( doc, tried + 1 );
+            //insert_doc( doc, tried + 1 );
+            insert( doc, tried + 1 );
           } );
         }
         else {
@@ -287,6 +339,7 @@ io.of( '/feature' ).on( 'connection', function ( socket ) {
       }
       data.properties.options.id = body.id
       data.id = body.id
+      debug( "Feature Created", util.inspect( data, false, 4, true ) );
       socket.broadcast.emit( 'created', data );
       if ( func ) {
         func( body.id );
@@ -294,14 +347,14 @@ io.of( '/feature' ).on( 'connection', function ( socket ) {
     } );
   } );
   socket.on( 'edited', function ( data, func ) {
-    debug( "edited", util.inspect( data ) );
+    debug( "Feature Edited", util.inspect( data ) );
     socket.broadcast.emit( 'edited', data );
     if ( func ) {
       func();
     }
   } );
   socket.on( 'deleted', function ( data, func ) {
-    debug( "deleted", util.inspect( data ) );
+    debug( "Feature Deleted", util.inspect( data ) );
     socket.broadcast.emit( 'deleted', data );
     if ( func ) {
       func();
@@ -370,19 +423,6 @@ io.of( '/conference' ).on( 'connection', function ( socket ) {
   } );
 } );
 
-function debug( title, message ) {
-  var fill = "========================================================";
-  var line = "==========${title}==========";
-  var date = new Date().toLocaleTimeString();
-
-  var header = line.replace( "${title}", " " + title + " " + date + " " );
-  var footer = line.replace( "${title}", fill.substring( 0, title.length + date.length + 3 ) );
-
-  util.debug( header );
-  util.debug( message )
-  util.debug( footer );
-}
-
 var replify = require( 'replify' )
 
 console.log( 'Replify at: camstreet' );
@@ -405,3 +445,29 @@ replify( 'camstreet', app, {
     } );
   }
 } );
+
+var error = function ( title, message ) {
+  var fill = "========================================================";
+  var line = "==========${title}==========";
+  var date = new Date().toLocaleTimeString();
+
+  var header = line.replace( "${title}", " " + title + " " + date + " " );
+  var footer = line.replace( "${title}", fill.substring( 0, title.length + date.length + 3 ) );
+
+  util.debug( header.red );
+  util.debug( message.red )
+  util.debug( footer.red );
+}
+
+var debug = function ( title, message ) {
+  var fill = "========================================================";
+  var line = "==========${title}==========";
+  var date = new Date().toLocaleTimeString();
+
+  var header = line.replace( "${title}", " " + title + " " + date + " " );
+  var footer = line.replace( "${title}", fill.substring( 0, title.length + date.length + 3 ) );
+
+  util.debug( header.blue );
+  util.debug( message.blue )
+  util.debug( footer.blue );
+}

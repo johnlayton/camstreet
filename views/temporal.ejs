@@ -24,8 +24,8 @@
     <!--<script src="/dist/bundle.js"></script>-->
     <script src="/browserify"></script>
     <script>
-      require( 'branding' );
-      require( 'time' );
+      var b = require( 'branding' );
+      var t = require( 'time' );
       var _ = require( 'underscore' );
       var u = require( 'util' );
       var $ = require( 'jquery' );
@@ -41,16 +41,14 @@
       var f = '/{z}/{x}/{y}.png';
       var g = '/{z}/{y}/{x}.png';
 
-      var map = L.map( 'map', {
-        attributionControl: false,
-        timeControl: true
-      } ).setView( [-37.8, 144.9], 7 );
+      var map = L.map( 'map', { attributionControl: false, timeControl: true } ).setView( [-37.8, 144.9], 7 );
 
       var underlays = {
         "arcgis": L.tileLayer( b + g, { maxZoom: 18 } ).addTo( map )
       };
 
       var overlays = {
+        /*
         "ffdi": L.tileLayer.wms( d, {
           service: 'wms',
           //crs: 'CRS:84',
@@ -77,8 +75,21 @@
           format: 'image/png;mode=32bit',
           transparent: true
         } ).addTo( map )
+        */
         //"ffdi"     : L.tileLayer(c + 'ffdi' + f, { maxZoom: 18, opacity: 0.3 }).addTo(map),
         //"temp"     : L.tileLayer(c + 'temp' + f, { maxZoom: 18, opacity: 0.3 }).addTo(map)
+        "ffdi"     : L.tileLayer.wms(c + 'ffdi', {
+          //version: '1.3.0',
+          time: new Date( 2013, 04, 08 ).toISOString(),
+          maxZoom: 18,
+          opacity: 0.3
+        }),
+        "temp"     : L.tileLayer.wms(c + 'temp', {
+          //version: '1.3.0',
+          time: new Date( 2013, 04, 08 ).toISOString(),
+          maxZoom: 18,
+          opacity: 0.3
+        })
       };
 
       L.control.layers( underlays, overlays ).addTo( map );

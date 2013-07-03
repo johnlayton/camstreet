@@ -52,32 +52,6 @@
       var i = require( 'socket.io' );
     </script>
     <script>
-      var debug = function( title, message ) {
-        var fill = "========================================================";
-        var line = "==========${title}==========";
-        var date = new Date().toLocaleTimeString();
-
-        var header = line.replace( "${title}", " " + title + " " + date + " " );
-        var footer = line.replace( "${title}", fill.substring( 0, title.length + date.length + 3 ) );
-
-        util.debug( header.blue );
-        util.debug( message.blue )
-        util.debug( footer.blue );
-      }
-
-      var error = function( title, message ) {
-        var fill = "========================================================";
-        var line = "==========${title}==========";
-        var date = new Date().toLocaleTimeString();
-
-        var header = line.replace( "${title}", " " + title + " " + date + " " );
-        var footer = line.replace( "${title}", fill.substring( 0, title.length + date.length + 3 ) );
-
-        util.debug( header.red );
-        util.debug( message.red )
-        util.debug( footer.red );
-      }
-
       var conference = i.connect( "http://" + document.location.hostname + "/conference",
           { transports: ['websocket'] } );
       conference.on( 'enter', function ( data ) {
