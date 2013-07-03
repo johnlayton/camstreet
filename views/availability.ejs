@@ -1,193 +1,276 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title><%= title %></title>
+<head>
+  <title><%= title %></title>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 
-    <link rel="stylesheet" href="/dist/leaflet.css"/>
-    <link rel="stylesheet" href="/dist/leaflet.dvf.css"/>
-    <link rel="stylesheet" href="/dist/camstreet.availability.css"/>
+  <link rel="stylesheet" href="/dist/leaflet.css"/>
+  <link rel="stylesheet" href="/dist/leaflet.dvf.css"/>
+  <link rel="stylesheet" href="/dist/camstreet.availability.css"/>
 
-    <!--[if lte IE 8]>
-    <link rel="stylesheet" href="/dist/leaflet.ie.css"/>
-    <![endif]-->
+  <!--[if lte IE 8]>
+  <link rel="stylesheet" href="/dist/leaflet.ie.css"/>
+  <![endif]-->
 
-    <script src="/dist/leaflet-src.js"></script>
-    <script src="/dist/leaflet.dvf.js"></script>
-    <script src="/dist/leaflet.ajax.js"></script>
+  <script src="/dist/leaflet-src.js"></script>
+  <script src="/dist/leaflet.dvf.js"></script>
+  <script src="/dist/leaflet.ajax.js"></script>
 
-    <% if ( agent.indexOf( 'Mobile' ) > 0 ) {%>
-    <script src="/dist/cordova-2.3.0.js"></script>
-    <% } else { %>
-    <% } %>
-  </head>
-  <body>
-    <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
-    <script src="/browserify"></script>
-    <script>
-      var b = require( 'branding' );
-      var m = require( 'markers' );
-      var _ = require( 'underscore' );
-      var u = require( 'util' );
-      var $ = require( 'jquery' );
-      var i = require( 'socket.io' );
-    </script>
-    <script>
+  <% if ( agent.indexOf( 'Mobile' ) > 0 ) {%>
+  <script src="/dist/cordova-2.3.0.js"></script>
+  <% } else { %>
+  <% } %>
 
-      m( {
-        point: function( geojson, latlng ) {
-          return new L.CircleMarker( latlng );
-        }
-      } );
+  <style>
+      /*#map {*/
+      /*width: 800px;*/
+      /*height: 500px;*/
+      /*}*/
 
-      var b = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile";
-      var c = "http://" + document.location.hostname + ":8888/";
+    .info {
+      padding: 6px 8px;
+      font: 14px/16px Arial, Helvetica, sans-serif;
+      background: white;
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      border-radius: 5px;
+    }
 
-      var f = '/{z}/{x}/{y}.png';
-      var g = '/{z}/{y}/{x}.png';
+    .info h4 {
+      margin: 0 0 5px;
+      color: #777;
+    }
 
-      var map = L.map( 'map', { attributionControl: false } )
-          .setView( [-37.8, 144.9], 7 );
+    .legend {
+      text-align: left;
+      line-height: 18px;
+      color: #555;
+    }
 
-      function feat( type ) {
-        return function ( feature, layer ) {
-          var out = [];
-          if ( feature.properties ) {
-            for ( key in feature.properties ) {
-              out.push( "<dt>" + key + "</dt><dd>" + feature.properties[key] + "</dd> " );
-            }
-            var label = feature.properties["Label"].toLocaleLowerCase();
-            layer.bindPopup( "<div class='geojson-properties'>" +
-                             "<span class='title'>" + label + " " + type + "</span>" +
-                             "<dl>" + out.join( "" ) + "</dl>" +
-                             "</div>" );
+    .legend i {
+      width: 18px;
+      height: 18px;
+      float: left;
+      margin-right: 8px;
+      opacity: 0.7;
+    }
 
-            _.each( [ "Dozer", "Tanker", "PassVeh", "Person" ], function ( resource, index ) {
-
-              var available = parseInt( feature.properties[resource + "_A"] );
-              var total = parseInt( feature.properties[resource + "_T"] );
-              var used = total - available;
-
-              var options = {
-                data: {
-                  'Available': available,
-                  'Used': used
-                },
-                chartOptions: {
-                  'Available': {
-                    fillColor: '#66BB66',
-                    displayName: resource + "&nbsp;Available",
-                    displayText: function ( value ) {
-                      return available;
-                    }
-                  },
-                  'Used': {
-                    fillColor: '#BB6666',
-                    displayName: resource + "&nbsp;Used",
-                    displayText: function ( value ) {
-                      return used;
-                    }
-                  }
-                },
-                fillOpacity: 0.8,
-                opacity: 1,
-                weight: 0.5,
-                radius: 15 + ( index * 15 ),
-                barThickness: 10,
-                maxDegrees: 90,
-                rotation: 180,
-                numSegments: 10
-              };
-
-               overlays[type].addLayer(
-               new L.PieChartMarker( layer.getLatLng(), options )
-               );
-
-            } );
-
-            optionsA = {
-              position: {
-                x: 30,
-                y: 30
-              },
-              fillOpacity: 0.8,
-              opacity: 1,
-              weight: 0.5,
-              barThickness: 10,
-              data: {},
-              chartOptions: {}
-            }
-            optionsT = {
-              position: {
-                x: 0,
-                y: 0
-              },
-              fillOpacity: 0.8,
-              opacity: 0.7,
-              weight: 0.9,
-              barThickness: 10,
-              data: {},
-              chartOptions: {}
-            }
-
-            _.each( [ "Person", "PassVeh", "Tanker", "Dozer" ], function ( resource, index ) {
-              optionsT.data[ resource ] = Math.ceil( Math.log( parseInt( feature.properties[resource + "_T"] ) ) ) * 5;
-              optionsT.chartOptions[ resource ] = {
-                fillColor: '#AABBDD',
-                minValue: 0,
-                maxValue: 20,
-                maxHeight: 20,
-                displayText: function ( value ) {
-                  return parseInt( feature.properties[resource + "_T"] );
-                }
-              }
-              optionsA.data[ resource ] = Math.ceil( Math.log( parseInt( feature.properties[resource + "_A"] ) ) ) * 5;
-              optionsA.chartOptions[ resource ] = {
-                fillColor: '#AADDBB',
-                minValue: 0,
-                maxValue: 20,
-                maxHeight: 20,
-                displayText: function ( value ) {
-                  return parseInt( feature.properties[resource + "_A"] );
-                }
-              }
-
-            } );
-
-            //overlays[type].addLayer( new L.BarChartMarker( layer.getLatLng(), optionsT ) );
-            //overlays[type].addLayer( new L.BarChartMarker( layer.getLatLng(), optionsA ) );
-
-            //new L.PieChartMarker(layer.getLatLng(),options)
-            //new L.RadialBarChartMarker( layer.getLatLng(), options )
-            //new L.BarChartMarker(layer.getLatLng(), options)
-          }
-        }
+    .label {
+      text-transform: capitalize;
+    }
+  </style>
+</head>
+<body>
+  <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+  <script src="/browserify"></script>
+  <script>
+    var b = require( 'branding' );
+    var d = require( 'd3' );
+    var m = require( 'markers' );
+    var _ = require( 'underscore' );
+    var u = require( 'util' );
+    var $ = require( 'jquery' );
+    var i = require( 'socket.io' );
+    var c = require( 'crossfilter' );
+    var o = require( 'merge' );
+  </script>
+  <script type="text/javascript" src="http://localhost:8888/available.js?callback=available"></script>
+  <!--<script type="text/javascript" src="http://localhost:8888/events.js?callback=events"></script>-->
+  <script>
+    var avail = function ( district, data ) {
+      var add = function( p, v ) {
+        return o( p, v.properties.availability );
       }
 
-      L.control.scale( { imperial: false } ).addTo( map );
+      var rem = function( p, v ) {
+      }
 
-      var underlays = {
-        "emap"   : L.tileLayer( c + 'mapscape' + f, { maxZoom: 18 } ).addTo( map ),
-        "vicmap" : L.tileLayer( c + 'vicmap' + f, { maxZoom: 18 } ).addTo( map ),
-        "arcgis" : L.tileLayer( b + g, { maxZoom: 19 } ).addTo( map )
+      var ini = function() {
+        return {};
+      }
+
+      var features = crossfilter( data.features );
+      var dimension = features.dimension( function ( feature ) {
+        return feature.properties.location.district;
+      } );
+      dimension.filter( district );
+      return features.groupAll().reduce( add, rem, ini ).value();
+    }
+
+    m( {
+      point: function ( geojson, latlng ) {
+        return new L.CircleMarker( latlng );
+      }
+    } );
+
+    var b = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile";
+    var c = "http://" + document.location.hostname + ":8888/";
+
+    var f = '/{z}/{x}/{y}.png';
+    var g = '/{z}/{y}/{x}.png';
+
+    var map = L.map( 'map', { attributionControl: false } )
+        .setView( [-37.8, 144.9], 7 );
+
+
+    // control that shows state info on hover
+    var info = L.control( {position: 'bottomright'} );
+
+    info.onAdd = function ( map ) {
+      this._div = L.DomUtil.create( 'div', 'info' );
+      this.update();
+      return this._div;
+    };
+
+    info.update = function ( props ) {
+      if ( props ) {
+        var data = avail( props['DISTRICT_N'] + " FIRE DISTRICT", available );
+
+        console.log( u.inspect( data ) );
+        var table = _.inject( data, function( html, item ) {
+          return html +
+                 '<tr>' +
+                   '<td>' + item.type + '</td>' +
+                   '<td>' + item.agency + '</td>' +
+                   '<td>' + item.total + '</td>' +
+                   '<td>' + item.available + '</td>' +
+                 '</tr>'
+        }, '<table><thead><tr><th>Type</th><th>Agency</th></Agengy><th>Total</th><th>Available</th></tr></thead><tbody>' ) + '</tbody></table>';
+
+        this._div.innerHTML = '<h4>Resource Availability</h4>' +
+                              (props ? '<b class="label">' + props['REGION_NAM'].toLocaleLowerCase() + ' - ' +
+                                       props['DISTRICT_N'].toLocaleLowerCase() + '</b><br/>' +
+                                       '<table>' + table + '</table>'
+                                       :
+                               'Hover over a state');
+      }
+
+
+    };
+
+    info.addTo( map );
+
+    // get color depending on population density value
+    function getColor( d ) {
+      return d > 1000 ? '#800026' :
+             d > 500 ? '#BD0026' :
+             d > 200 ? '#E31A1C' :
+             d > 100 ? '#FC4E2A' :
+             d > 50 ? '#FD8D3C' :
+             d > 20 ? '#FEB24C' :
+             d > 10 ? '#FED976' :
+             '#FFEDA0';
+    }
+
+    function style( feature ) {
+
+      return {
+        weight: 1,
+        opacity: 1,
+        color: 'grey',
+        dashArray: '3',
+        fillOpacity: 0.7,
+        fillColor: getColor( feature.properties.density )
       };
+    }
 
-      var overlays = {
-        "district": L.geoJson.ajax( c + 'district_availability.json', {
-          onEachFeature: feat( "district" )
-        } ),
-        "districts": L.geoJson.ajax( c + 'districts.json', {
-        } ),
-        "regional": L.geoJson.ajax( c + 'regional_availability.json', {
-          onEachFeature: feat( "regional" )
-        } ),
-        "regions": L.geoJson.ajax( c + 'regions.json', {
-        } )
-      };
+    function highlightFeature( e ) {
+      var layer = e.target;
 
-      L.control.layers( underlays, overlays ).addTo( map );
+      layer.setStyle( {
+        weight: 2,
+        color: '#666',
+        dashArray: '',
+        fillOpacity: 0.7
+      } );
 
-    </script>
-  </body>
+      if ( !L.Browser.ie && !L.Browser.opera ) {
+        layer.bringToFront();
+      }
+
+      info.update( layer.feature.properties );
+    }
+
+    //var geojson;
+
+    function resetHighlight( name ) {
+      return function ( e ) {
+        overlays[name].resetStyle( e.target );
+        info.update();
+      }
+    }
+
+    function zoomToFeature( e ) {
+      map.fitBounds( e.target.getBounds() );
+    }
+
+    function onEachFeature( name ) {
+      return function ( feature, layer ) {
+        layer.on( {
+          mouseover: highlightFeature,
+          mouseout: resetHighlight( name ),
+          click: zoomToFeature
+        } );
+      }
+    }
+
+    /*
+     geojson = L.geoJson(statesData, {
+     style: style,
+     onEachFeature: onEachFeature
+     }).addTo(map);
+     */
+
+    //map.attributionControl.addAttribution('Population data &copy; <a href="http://census.gov/">US Census Bureau</a>');
+
+
+    /*
+     var legend = L.control({position: 'bottomright'});
+
+     legend.onAdd = function (map) {
+
+     var div = L.DomUtil.create('div', 'info legend'),
+     grades = [0, 10, 20, 50, 100, 200, 500, 1000],
+     labels = [],
+     from, to;
+
+     for (var i = 0; i < grades.length; i++) {
+     from = grades[i];
+     to = grades[i + 1];
+
+     labels.push(
+     '<i style="background:' + getColor(from + 1) + '"></i> ' +
+     from + (to ? '&ndash;' + to : '+'));
+     }
+
+     div.innerHTML = labels.join('<br>');
+     return div;
+     };
+
+     legend.addTo(map);
+     */
+
+    var underlays = {
+      "emap": L.tileLayer( c + 'mapscape' + f, { maxZoom: 18 } ).addTo( map ),
+      "vicmap": L.tileLayer( c + 'vicmap' + f, { maxZoom: 18 } ).addTo( map ),
+      "arcgis": L.tileLayer( b + g, { maxZoom: 19 } ).addTo( map )
+    };
+
+    var overlays = {
+      "districts": L.geoJson.ajax( c + 'districts.json', {
+        style: style,
+        onEachFeature: onEachFeature( "districts" )
+      } )
+      //"regions": L.geoJson.ajax( c + 'regions.json', {
+      //  style: style,
+      //  onEachFeature: onEachFeature
+      //} )
+    };
+
+    L.control.layers( underlays, overlays ).addTo( map );
+    L.control.scale( { imperial: false } ).addTo( map );
+
+  </script>
+</body>
 </html>

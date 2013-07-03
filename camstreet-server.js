@@ -9,11 +9,14 @@ var connect = require( 'connect' )
   , _ = require( 'underscore' )
   , uuid = require( 'node-uuid' )
   , http = require( 'http' )
-  , colors = require( 'colors' );
+  , colors = require( 'colors' )
+  , merge = require( './lib/camstreet.merge.js');
 
 var nano = require( 'nano' )( 'http://localhost:5984' );
 var db_name = "places";
 var db = nano.use( db_name );
+
+//console.log( util.inspect( merge( {a:1, b:1}, {a:2, c:2})  ) );
 
 //http://localhost:5984/places/_design/main/_spatial/points?bbox=143,-45,160,-35
 nano.db.create( db_name, function () {
@@ -48,6 +51,7 @@ var b = browser()
   .require( 'traverse' )
   .require( 'geohash' )
   .require( 'http-browserify' )
+  .require( 'crossfilter' )
   .require( 'socket.io-browserify', { expose: 'socket.io' } )
   .require( 'jquery-browserify', { expose: 'jquery' } )
   .require( './lib/camstreet.geojson.js', { expose: 'geojson' } )
@@ -57,7 +61,8 @@ var b = browser()
   .require( './lib/camstreet.coverage.js', { expose: 'coverage' } )
   .require( './lib/camstreet.notifications.js', { expose: 'notifications' } )
   .require( './lib/camstreet.branding.js', { expose: 'branding' } )
-  .require( './lib/camstreet.conference.js', { expose: 'conference' } );
+  .require( './lib/camstreet.conference.js', { expose: 'conference' } )
+  .require( './lib/camstreet.merge.js', { expose: 'merge' } );
 
 var app = express();
 
@@ -292,7 +297,7 @@ app.get( "/browserify", function ( req, res ) {
       debug( 'Error', util.inspect( err ) );
     }
     else {
-      debug( 'Success', util.inspect( src ) );
+      //debug( 'Success', util.inspect( src ) );
     }
   } ).pipe( oppressor( req ) ).pipe( res );
 } );

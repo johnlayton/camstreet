@@ -7,7 +7,7 @@
 
     <link rel="stylesheet" href="/dist/leaflet.css"/>
     <link rel="stylesheet" href="/dist/leaflet.dvf.css"/>
-    <link rel="stylesheet" href="/dist/camstreet.resources.css"/>
+    <link rel="stylesheet" href="/dist/camstreet.availability.css"/>
 
     <!--[if lte IE 8]>
     <link rel="stylesheet" href="/dist/leaflet.ie.css"/>
@@ -35,6 +35,12 @@
     </script>
     <script>
 
+      m( {
+        point: function ( geojson, latlng ) {
+          return new L.CircleMarker( latlng );
+        }
+      } );
+
       var b = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile";
       var c = "http://" + document.location.hostname + ":8888/";
 
@@ -48,45 +54,115 @@
         return function ( feature, layer ) {
           var out = [];
           if ( feature.properties ) {
-
-            var resources = [ "Person", "PassVeh", "Tanker", "Dozer" ];
-
-            _.each( resources, function ( key ) {
-              feature.properties[key + "_T"] = 200;
-              feature.properties[key + "_A"] = 190;
-              feature.properties[key + "_D"] = 0.95;
-            } );
-
             for ( key in feature.properties ) {
               out.push( "<dt>" + key + "</dt><dd>" + feature.properties[key] + "</dd> " );
             }
-
-            layer.bindPopup( "<div  class='geojson-properties'>" +
-                             "<span class='title'>Work Centre</span>" +
+            var label = feature.properties["Label"].toLocaleLowerCase();
+            layer.bindPopup( "<div class='geojson-properties'>" +
+                             "<span class='title'>" + label + " " + type + "</span>" +
                              "<dl>" + out.join( "" ) + "</dl>" +
                              "</div>" );
 
-            _.each( resources, function ( key, index ) {
+
+            optionsA = {
+              position: {
+                x: 30,
+                y: 30
+              },
+              fillOpacity: 0.8,
+              opacity: 1,
+              weight: 0.5,
+              barThickness: 10,
+              data: {},
+              chartOptions: {}
+            }
+            optionsT = {
+              position: {
+                x: 0,
+                y: 0
+              },
+              fillOpacity: 0.8,
+              opacity: 0.7,
+              weight: 0.9,
+              barThickness: 10,
+              data: {},
+              chartOptions: {}
+            }
+
+            _.each( [ "Dozer", "Tanker", "PassVeh", "Person" ], function ( resource, index ) {
+
+              var available = parseInt( feature.properties[resource + "_A"] );
+              var total = parseInt( feature.properties[resource + "_T"] );
+              var used = total - available;
+
               var options = {
-                color: '#000',
-                weight: 1,
-                fillColor: 'hsl(' + 20 * index + ',100%,50%)',
-                radiusX: 10,
-                radiusY: 10,
-                fillOpacity: 0.7,
-                rotation: 0.0,
-                position: {
-                  x: 0,
-                  y: 0
+                data: {
+                  'Available': available,
+                  'Used': used
                 },
-                offset: 0
+                chartOptions: {
+                  'Available': {
+                    fillColor: '#66BB66',
+                    displayName: resource + "&nbsp;Available",
+                    displayText: function ( value ) {
+                      return available;
+                    }
+                  },
+                  'Used': {
+                    fillColor: '#BB6666',
+                    displayName: resource + "&nbsp;Used",
+                    displayText: function ( value ) {
+                      return used;
+                    }
+                  }
+                },
+                fillOpacity: 0.8,
+                opacity: 1,
+                weight: 0.5,
+                radius: 15 + ( index * 15 ),
+                barThickness: 10,
+                maxDegrees: 90,
+                rotation: 180,
+                numSegments: 10
               };
 
+              optionsT.data[ resource ] = Math.ceil( Math.log( parseInt( feature.properties[resource + "_T"] ) ) ) * 5;
+              optionsT.chartOptions[ resource ] = {
+                fillColor: '#AABBDD',
+                minValue: 0,
+                maxValue: 20,
+                maxHeight: 20,
+                displayText: function ( value ) {
+                  return parseInt( feature.properties[resource + "_T"] );
+                }
+              }
+              optionsA.data[ resource ] = Math.ceil( Math.log( parseInt( feature.properties[resource + "_A"] ) ) ) * 5;
+              optionsA.chartOptions[ resource ] = {
+                fillColor: '#AADDBB',
+                minValue: 0,
+                maxValue: 20,
+                maxHeight: 20,
+                displayText: function ( value ) {
+                  return parseInt( feature.properties[resource + "_A"] );
+                }
+              }
 
-              overlays[type].addLayer(
-                  new L.RadialBarChartMarker( layer.getLatLng(), options )
-              );
             } );
+
+            overlays[type].addLayer(
+                new L.PieChartMarker( layer.getLatLng(), options )
+            );
+
+            //overlays[type].addLayer(
+            //  new L.BarChartMarker( layer.getLatLng(), optionsT )
+            //);
+            //overlays[type].addLayer(
+            // new L.BarChartMarker( layer.getLatLng(), optionsA )
+            //);
+
+            //new L.PieChartMarker(layer.getLatLng(),options)
+            //new L.RadialBarChartMarker( layer.getLatLng(), options )
+            //new L.BarChartMarker(layer.getLatLng(), options)
           }
         }
       }
@@ -94,16 +170,21 @@
       L.control.scale( { imperial: false } ).addTo( map );
 
       var underlays = {
-        //"emap": L.tileLayer( c + 'mapscape' + f, { maxZoom: 18 } ).addTo( map ),
+        "emap": L.tileLayer( c + 'mapscape' + f, { maxZoom: 18 } ).addTo( map ),
+        "vicmap": L.tileLayer( c + 'vicmap' + f, { maxZoom: 18 } ).addTo( map ),
         "arcgis": L.tileLayer( b + g, { maxZoom: 19 } ).addTo( map )
       };
 
       var overlays = {
-        "workcentres": L.geoJson.ajax( c + 'workcentres.json', {
-          onEachFeature: feat( "workcentres" )
+        "district": L.geoJson.ajax( c + 'district_availability.json', {
+          onEachFeature: feat( "district" )
         } ),
-        "icc": L.geoJson.ajax( c + 'icc.json', {
-          onEachFeature: feat( "icc" )
+        "districts": L.geoJson.ajax( c + 'districts.json', {
+        } ),
+        "regional": L.geoJson.ajax( c + 'regional_availability.json', {
+          onEachFeature: feat( "regional" )
+        } ),
+        "regions": L.geoJson.ajax( c + 'regions.json', {
         } )
       };
 

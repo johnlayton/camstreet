@@ -39,6 +39,7 @@
     "ncp"                  : "*",
     "node-uuid"            : "*",
     "colors"               : "*",
+    "crossfilter"          : "*",
     "cradle"               : "*",
     "replify"              : "*",
     "nano"                 : "*"
