@@ -44,9 +44,8 @@
     <div>
       <ul id="conference"></ul>
     </div>
-    <script src="/browserify"></script>
+    <script src="/browserify?libs=util,jquery,io"></script>
     <script>
-      var _ = require( 'underscore' );
       var u = require( 'util' );
       var $ = require( 'jquery' );
       var i = require( 'socket.io' );

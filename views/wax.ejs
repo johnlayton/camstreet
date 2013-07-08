@@ -21,13 +21,10 @@
   </head>
   <body>
     <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+    <script src="/browserify?libs=branding"></script>
     <script src="/browserify"></script>
     <script>
       var b = require( 'branding' );
-      var _ = require( 'underscore' );
-      var u = require( 'util' );
-      var $ = require( 'jquery' );
-      var i = require( 'socket.io' );
     </script>
     <script>
       var map = new L.Map( 'map' );

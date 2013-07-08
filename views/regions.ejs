@@ -6,15 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 
     <link rel="stylesheet" href="/dist/leaflet.css"/>
-    <!--<link rel="stylesheet" href="/dist/leaflet.dvf.css"/>-->
-    <!--<link rel="stylesheet" href="/dist/camstreet.resources.css"/>-->
 
     <!--[if lte IE 8]>
     <link rel="stylesheet" href="/dist/leaflet.ie.css"/>
     <![endif]-->
 
     <script src="/dist/leaflet-src.js"></script>
-    <!--<script src="/dist/leaflet.dvf.js"></script>-->
     <script src="/dist/leaflet.ajax.js"></script>
 
     <% if ( agent.indexOf( 'Mobile' ) > 0 ) {%>
@@ -24,13 +21,11 @@
   </head>
   <body>
     <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
-    <script src="/browserify"></script>
+    <script src="/browserify?libs=branding,util,jquery"></script>
     <script>
       var b = require( 'branding' );
-      var _ = require( 'underscore' );
       var u = require( 'util' );
       var $ = require( 'jquery' );
-      var i = require( 'socket.io' );
     </script>
     <script>
 

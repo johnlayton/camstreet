@@ -38,12 +38,12 @@
       <ul id="clients">
       </ul>
     </div>
-    <script src="/browserify"></script>
+    <script src="/browserify?libs=branding,conference,io,jquery,util"></script>
     <script>
       var b = require( 'branding' );
-      var _ = require( 'underscore' );
-      var u = require( 'util' );
+      var c = require( 'conference' );
       var $ = require( 'jquery' );
+      var u = require( 'util' );
       var i = require( 'socket.io' );
     </script>
     <script>
@@ -59,7 +59,6 @@
       conference.on( "ready", function () {
         console.log( "Ready ... " );
         conference.enter( name, function ( data ) {
-          // add remote client(s)
         } );
       } );
 

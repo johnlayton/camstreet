@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+  </head>
+  <body>
+    <h4>Available Browserify Javascript Libraries</h4>
+    <dl>
+    <% for( property in libs ) { %>
+      <dt><%= property %></dt><dd><%= libs[property].library %> -> <%= libs[property].options.expose || 'N/A' %></dd>
+    <% } %>
+    </dl>
+  </body>
+</html>

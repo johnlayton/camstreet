@@ -1,108 +1,136 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title><%= title %></title>
+  <head>
+    <title><%= title %></title>
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 
-  <link rel="stylesheet" href="/dist/leaflet.css"/>
-  <link rel="stylesheet" href="/dist/leaflet.dvf.css"/>
-  <link rel="stylesheet" href="/dist/camstreet.availability.css"/>
+    <link rel="stylesheet" href="/dist/leaflet.css"/>
+    <link rel="stylesheet" href="/dist/camstreet.availability.css"/>
 
-  <!--[if lte IE 8]>
-  <link rel="stylesheet" href="/dist/leaflet.ie.css"/>
-  <![endif]-->
+    <!--[if lte IE 8]>
+    <link rel="stylesheet" href="/dist/leaflet.ie.css"/>
+    <![endif]-->
 
-  <script src="/dist/leaflet-src.js"></script>
-  <script src="/dist/leaflet.dvf.js"></script>
-  <script src="/dist/leaflet.ajax.js"></script>
+    <script src="/dist/leaflet-src.js"></script>
+    <script src="/dist/leaflet.ajax.js"></script>
 
-  <% if ( agent.indexOf( 'Mobile' ) > 0 ) {%>
-  <script src="/dist/cordova-2.3.0.js"></script>
-  <% } else { %>
-  <% } %>
+    <% if ( agent.indexOf( 'Mobile' ) > 0 ) {%>
+    <script src="/dist/cordova-2.3.0.js"></script>
+    <% } else { %>
+    <% } %>
 
-  <style>
-      /*#map {*/
-      /*width: 800px;*/
-      /*height: 500px;*/
-      /*}*/
-
-    .info {
-      padding: 6px 8px;
-      font: 14px/16px Arial, Helvetica, sans-serif;
-      background: white;
-      background: rgba(255, 255, 255, 0.8);
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-      border-radius: 5px;
-    }
-
-    .info h4 {
-      margin: 0 0 5px;
-      color: #777;
-    }
-
-    .legend {
-      text-align: left;
-      line-height: 18px;
-      color: #555;
-    }
-
-    .legend i {
-      width: 18px;
-      height: 18px;
-      float: left;
-      margin-right: 8px;
-      opacity: 0.7;
-    }
-
-    .label {
-      text-transform: capitalize;
-    }
-  </style>
-</head>
-<body>
-  <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
-  <script src="/browserify"></script>
-  <script>
-    var b = require( 'branding' );
-    var d = require( 'd3' );
-    var m = require( 'markers' );
-    var _ = require( 'underscore' );
-    var u = require( 'util' );
-    var $ = require( 'jquery' );
-    var i = require( 'socket.io' );
-    var c = require( 'crossfilter' );
-    var o = require( 'merge' );
-  </script>
-  <script type="text/javascript" src="http://localhost:8888/available.js?callback=available"></script>
-  <!--<script type="text/javascript" src="http://localhost:8888/events.js?callback=events"></script>-->
-  <script>
-    var avail = function ( district, data ) {
-      var add = function( p, v ) {
-        return o( p, v.properties.availability );
+    <style>
+      .info {
+        padding: 6px 8px;
+        font: 14px/16px Arial, Helvetica, sans-serif;
+        background: white;
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        border-radius: 5px;
       }
 
-      var rem = function( p, v ) {
+      .info h4 {
+        margin: 0 0 5px;
+        color: #777;
       }
 
-      var ini = function() {
+      .legend {
+        text-align: left;
+        line-height: 18px;
+        color: #555;
+      }
+
+      .legend i {
+        width: 18px;
+        height: 18px;
+        float: left;
+        margin-right: 8px;
+        opacity: 0.7;
+      }
+
+      .label {
+        text-transform: capitalize;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+    <script src="/browserify?libs=branding,underscore,util,crossfilter,topojson"></script>
+    <script>
+      var b = require( 'branding' );
+      var _ = require( 'underscore' );
+      var u = require( 'util' );
+      var c = require( 'crossfilter' );
+      var t = require( 'topojson' );
+    </script>
+
+    <script type="text/javascript" src="http://192.168.1.20:8888/available.js?variable=available"></script>
+    <script type="text/javascript" src="http://192.168.1.20:8888/districts.js?variable=districts"></script>
+
+    <script>
+    var availability = function ( district, data, types, agencies ) {
+      var equalTo = equalTo || function ( a ) {
+        return function ( b ) {
+          return _.isEqual( a, b );
+        }
+      };
+
+      var type = function ( d ) {
+        if ( _.find( types || [ "Person" ], equalTo( d.type ) ) ) {
+          return d.type;
+        }
+        return "Other";
+      }
+
+      var agency = function ( d ) {
+        if ( _.find( agencies || [ "DSE", "DPI", "CFA" ], equalTo( d.agency ) ) ) {
+          return d.agency;
+        }
+        return "Other";
+      }
+
+      var add = function ( p, v ) {
+        return p.concat( v.properties.availability );
+      }
+
+      var inc = function ( p, v ) {
+        return {
+          'type': type( v ),
+          'agency': agency( v ),
+          'total': v.total + p.total,
+          'available': v.available + p.available
+        };
+      }
+
+      var rem = function ( p, v ) {
         return {};
+      }
+
+      var arr = function () {
+        return [];
+      }
+
+      var obj = function () {
+        return {
+          total: 0,
+          available: 0
+        };
       }
 
       var features = crossfilter( data.features );
       var dimension = features.dimension( function ( feature ) {
         return feature.properties.location.district;
       } );
-      dimension.filter( district );
-      return features.groupAll().reduce( add, rem, ini ).value();
-    }
 
-    m( {
-      point: function ( geojson, latlng ) {
-        return new L.CircleMarker( latlng );
-      }
-    } );
+      dimension.filter( district );
+
+      var props = crossfilter( features.groupAll().reduce( add, rem, arr ).value() );
+      var dim = props.dimension( function ( p ) {
+        return type( p ) + " " + agency( p );
+      } );
+      return dim.group().reduce( inc, rem, obj ).top( Infinity );
+    }
 
     var b = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile";
     var c = "http://" + document.location.hostname + ":8888/";
@@ -113,8 +141,6 @@
     var map = L.map( 'map', { attributionControl: false } )
         .setView( [-37.8, 144.9], 7 );
 
-
-    // control that shows state info on hover
     var info = L.control( {position: 'bottomright'} );
 
     info.onAdd = function ( map ) {
@@ -125,27 +151,26 @@
 
     info.update = function ( props ) {
       if ( props ) {
-        var data = avail( props['DISTRICT_N'] + " FIRE DISTRICT", available );
-
-        console.log( u.inspect( data ) );
-        var table = _.inject( data, function( html, item ) {
-          return html +
-                 '<tr>' +
-                   '<td>' + item.type + '</td>' +
-                   '<td>' + item.agency + '</td>' +
-                   '<td>' + item.total + '</td>' +
-                   '<td>' + item.available + '</td>' +
-                 '</tr>'
-        }, '<table><thead><tr><th>Type</th><th>Agency</th></Agengy><th>Total</th><th>Available</th></tr></thead><tbody>' ) + '</tbody></table>';
+        var data = availability( props['DISTRICT_N'] + " FIRE DISTRICT", available );
+        var table = _.inject( data, function ( html, item ) {
+              return html +
+                     '<tr>' +
+                     '<td>' + item.value.type + '</td>' +
+                     '<td>' + item.value.agency + '</td>' +
+                     '<td>' + item.value.total + '</td>' +
+                     '<td>' + item.value.available + '</td>' +
+                     '</tr>'
+            },
+            '<table><thead><tr><th>Type</th><th>Agency</th></Agengy><th>Total</th><th>Available</th></tr></thead><tbody>' ) +
+                    '</tbody></table>';
 
         this._div.innerHTML = '<h4>Resource Availability</h4>' +
                               (props ? '<b class="label">' + props['REGION_NAM'].toLocaleLowerCase() + ' - ' +
                                        props['DISTRICT_N'].toLocaleLowerCase() + '</b><br/>' +
                                        '<table>' + table + '</table>'
-                                       :
+                                  :
                                'Hover over a state');
       }
-
 
     };
 
@@ -153,18 +178,17 @@
 
     // get color depending on population density value
     function getColor( d ) {
-      return d > 1000 ? '#800026' :
-             d > 500 ? '#BD0026' :
-             d > 200 ? '#E31A1C' :
-             d > 100 ? '#FC4E2A' :
-             d > 50 ? '#FD8D3C' :
-             d > 20 ? '#FEB24C' :
-             d > 10 ? '#FED976' :
+      return d > 32 ? '#800026' :
+             d > 16 ? '#BD0026' :
+             d > 8 ? '#E31A1C' :
+             d > 4 ? '#FC4E2A' :
+             d > 2 ? '#FD8D3C' :
+             d > 1 ? '#FEB24C' :
+             d > 0 ? '#FED976' :
              '#FFEDA0';
     }
 
     function style( feature ) {
-
       return {
         weight: 1,
         opacity: 1,
@@ -177,22 +201,17 @@
 
     function highlightFeature( e ) {
       var layer = e.target;
-
       layer.setStyle( {
         weight: 2,
         color: '#666',
         dashArray: '',
         fillOpacity: 0.7
       } );
-
       if ( !L.Browser.ie && !L.Browser.opera ) {
         layer.bringToFront();
       }
-
       info.update( layer.feature.properties );
     }
-
-    //var geojson;
 
     function resetHighlight( name ) {
       return function ( e ) {
@@ -214,16 +233,6 @@
         } );
       }
     }
-
-    /*
-     geojson = L.geoJson(statesData, {
-     style: style,
-     onEachFeature: onEachFeature
-     }).addTo(map);
-     */
-
-    //map.attributionControl.addAttribution('Population data &copy; <a href="http://census.gov/">US Census Bureau</a>');
-
 
     /*
      var legend = L.control({position: 'bottomright'});
@@ -252,16 +261,20 @@
      */
 
     var underlays = {
-      "emap": L.tileLayer( c + 'mapscape' + f, { maxZoom: 18 } ).addTo( map ),
-      "vicmap": L.tileLayer( c + 'vicmap' + f, { maxZoom: 18 } ).addTo( map ),
+      //"emap": L.tileLayer( c + 'mapscape' + f, { maxZoom: 18 } ).addTo( map ),
+      //"vicmap": L.tileLayer( c + 'vicmap' + f, { maxZoom: 18 } ).addTo( map ),
       "arcgis": L.tileLayer( b + g, { maxZoom: 19 } ).addTo( map )
     };
 
     var overlays = {
-      "districts": L.geoJson.ajax( c + 'districts.json', {
+      "districts": L.geoJson( t.feature( districts, districts.objects['DSE_LF_DISTRICTS'] ), {
         style: style,
         onEachFeature: onEachFeature( "districts" )
       } )
+      //"districts": L.geoJson.ajax( c + 'districts.json', {
+      //  style: style,
+      //  onEachFeature: onEachFeature( "districts" )
+      //} )
       //"regions": L.geoJson.ajax( c + 'regions.json', {
       //  style: style,
       //  onEachFeature: onEachFeature
@@ -271,6 +284,6 @@
     L.control.layers( underlays, overlays ).addTo( map );
     L.control.scale( { imperial: false } ).addTo( map );
 
-  </script>
-</body>
+    </script>
+  </body>
 </html>

@@ -10,13 +10,11 @@ var connect = require( 'connect' )
   , uuid = require( 'node-uuid' )
   , http = require( 'http' )
   , colors = require( 'colors' )
-  , merge = require( './lib/camstreet.merge.js');
+  , merge = require( './lib/camstreet.merge.js' );
 
 var nano = require( 'nano' )( 'http://localhost:5984' );
 var db_name = "places";
 var db = nano.use( db_name );
-
-//console.log( util.inspect( merge( {a:1, b:1}, {a:2, c:2})  ) );
 
 //http://localhost:5984/places/_design/main/_spatial/points?bbox=143,-45,160,-35
 nano.db.create( db_name, function () {
@@ -43,26 +41,6 @@ nano.db.create( db_name, function () {
     }
   );
 } );
-
-var b = browser()
-  .require( 'underscore' )
-  .require( 'util' )
-  .require( 'd3' )
-  .require( 'traverse' )
-  .require( 'geohash' )
-  .require( 'http-browserify' )
-  .require( 'crossfilter' )
-  .require( 'socket.io-browserify', { expose: 'socket.io' } )
-  .require( 'jquery-browserify', { expose: 'jquery' } )
-  .require( './lib/camstreet.geojson.js', { expose: 'geojson' } )
-  .require( './lib/camstreet.markers.js', { expose: 'markers' } )
-  .require( './lib/camstreet.features.js', { expose: 'features' } )
-  .require( './lib/camstreet.time.js', { expose: 'time' } )
-  .require( './lib/camstreet.coverage.js', { expose: 'coverage' } )
-  .require( './lib/camstreet.notifications.js', { expose: 'notifications' } )
-  .require( './lib/camstreet.branding.js', { expose: 'branding' } )
-  .require( './lib/camstreet.conference.js', { expose: 'conference' } )
-  .require( './lib/camstreet.merge.js', { expose: 'merge' } );
 
 var app = express();
 
@@ -228,14 +206,14 @@ app.get( "/baselayers", function ( req, res ) {
   } );
 } )
 
-app.get( "/tracking", function( req, res ) {
+app.get( "/tracking", function ( req, res ) {
   var agent = req.headers['user-agent'];
   res.render( 'tracking', {
     title: 'Tracking',
     id: uuid(),
     agent: agent
   } );
-})
+} )
 
 app.get( "/tracking/:id", function ( req, res ) {
   var agent = req.headers['user-agent'];
@@ -264,24 +242,6 @@ app.get( "/conference/:name", function ( req, res ) {
   } );
 } )
 
-app.get( "/room", function ( req, res ) {
-  var agent = req.headers['user-agent']
-  res.render( 'room', {
-    title: 'Room ' + req.params.room,
-    room: uuid(),
-    agent: agent
-  } );
-} )
-
-app.get( "/room/:room", function ( req, res ) {
-  var agent = req.headers['user-agent']
-  res.render( 'room', {
-    title: 'Room ' + req.params.room,
-    room: req.params.room,
-    agent: agent
-  } );
-} )
-
 app.get( "/debug", function ( req, res ) {
   var agent = req.headers['user-agent']
   res.render( 'debug', {
@@ -290,18 +250,111 @@ app.get( "/debug", function ( req, res ) {
   } );
 } );
 
-app.get( "/browserify", function ( req, res ) {
-  res.set( "Content-Type", "application/javascript" );
-  b.bundle(function ( err, src ) {
-    if ( err ) {
-      debug( 'Error', util.inspect( err ) );
-    }
-    else {
-      //debug( 'Success', util.inspect( src ) );
-    }
-  } ).pipe( oppressor( req ) ).pipe( res );
+var libs = {
+  merge: {
+    library: './lib/camstreet.merge.js',
+    options: { expose: 'merge' }
+  },
+  conference: {
+    library: './lib/camstreet.conference.js',
+    options: { expose: 'conference' }
+  },
+  branding: {
+    library: './lib/camstreet.branding.js',
+    options: { expose: 'branding' }
+  },
+  notifications: {
+    library: './lib/camstreet.notifications.js',
+    options: { expose: 'notifications' }
+  },
+  coverage: {
+    library: './lib/camstreet.coverage.js',
+    options: { expose: 'coverage' }
+  },
+  time: {
+    library: './lib/camstreet.time.js',
+    options: { expose: 'time' }
+  },
+  drawing: {
+    library: './lib/camstreet.drawing.js',
+    options: { expose: 'features' }
+  },
+  markers: {
+    library: './lib/camstreet.markers.js',
+    options: { expose: 'markers' }
+  },
+  geojson: {
+    library: './lib/camstreet.geojson.js',
+    options: { expose: 'geojson' }
+  },
+  availability: {
+    library: './lib/camstreet.availability.js',
+    options: { expose: 'availability' }
+  },
+  topojson: {
+    library: './lib/camstreet.topojson.js',
+    options: { expose: 'topojson' }
+  },
+  jquery: {
+    library: 'jquery-browserify',
+    options: { expose: 'jquery' }
+  },
+  io: {
+    library: 'socket.io-browserify',
+    options: { expose: 'socket.io' }
+  },
+  geohash: {
+    library: 'geohash'
+  },
+  util: {
+    library: 'util'
+  },
+  d3: {
+    library: 'd3'
+  },
+  traverse: {
+    library: 'traverse'
+  },
+  http: {
+    library: 'http-browserify'
+  },
+  underscore: {
+    library: 'underscore'
+  },
+  crossfilter: {
+    library: 'crossfilter'
+  }
+}
+
+app.get( "/browserify/show", function ( req, res ) {
+  var agent = req.headers['user-agent']
+  res.render( 'browserify', {
+    title: 'Browserify',
+    libs: libs,
+    agent: agent
+  } );
 } );
 
+app.get( "/browserify/load/:lib", function ( req, res ) {
+  res.set( "Content-Type", "application/javascript" );
+  browser().require( libs[req.params.lib].library,
+      libs[req.params.lib].options )
+    .bundle(function(err,src){})
+    .pipe( oppressor( req ) )
+    .pipe( res )
+} );
+
+app.get( "/browserify", function ( req, res ) {
+  res.set( "Content-Type", "application/javascript" );
+  _.inject( req.param('libs' ) ? req.param('libs' ).split(',') : _.keys(libs), function( b, include ) {
+    return libs[include].options ?
+           b.require( libs[include].library, libs[include].options ) :
+           b.require( libs[include].library )
+  }, browser() )
+    .bundle(function(err,src){})
+    .pipe( oppressor( req ) )
+    .pipe( res )
+} );
 
 var server = http.createServer( app ).listen( app.get( 'port' ), "0.0.0.0", function () {
   console.log( "Express server listening on port " + app.get( 'port' ) );

@@ -41,7 +41,9 @@
     "colors"               : "*",
     "crossfilter"          : "*",
     "cradle"               : "*",
+    "shapefile"            : "*",
     "replify"              : "*",
+    "topojson"             : "*",
     "nano"                 : "*"
   },
   "description": "",

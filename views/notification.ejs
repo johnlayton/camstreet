@@ -20,14 +20,11 @@
   </head>
   <body>
     <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
-    <script src="/browserify"></script>
+    <script src="/browserify?libs=branding,notifications,util"></script>
     <script>
       var b = require( 'branding' );
       var n = require( 'notifications' );
-      var _ = require( 'underscore' );
       var u = require( 'util' );
-      var $ = require( 'jquery' );
-      var i = require( 'socket.io' );
     </script>
     <script>
       var b = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile";
@@ -42,7 +39,8 @@
       L.control.scale( { imperial: false } ).addTo( map );
 
       var underlays = {
-        "relief": L.tileLayer( c + 'relief' + f, { maxZoom: 18 } ).addTo( map )
+        "arcgis" : L.tileLayer( b + g, { maxZoom: 19 } ).addTo( map )
+        //"relief": L.tileLayer( c + 'relief' + f, { maxZoom: 18 } ).addTo( map )
       };
 
       var overlays = {
