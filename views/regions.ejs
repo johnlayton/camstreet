@@ -6,12 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 
     <link rel="stylesheet" href="/dist/leaflet.css"/>
+    <link rel="stylesheet" href="/dist/leaflet.dvf.css"/>
+    <link rel="stylesheet" href="/dist/camstreet.availability.css"/>
 
     <!--[if lte IE 8]>
     <link rel="stylesheet" href="/dist/leaflet.ie.css"/>
     <![endif]-->
 
     <script src="/dist/leaflet-src.js"></script>
+    <script src="/dist/leaflet.dvf.js"></script>
     <script src="/dist/leaflet.ajax.js"></script>
 
     <% if ( agent.indexOf( 'Mobile' ) > 0 ) {%>
@@ -21,15 +24,19 @@
   </head>
   <body>
     <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
-    <script src="/browserify?libs=branding,util,jquery"></script>
+    <script src="/browserify?libs=branding,template,geometry,util,jquery"></script>
     <script>
       var b = require( 'branding' );
+      var t = require( 'template' );
+      var a = require( 'geometry' );
       var u = require( 'util' );
       var $ = require( 'jquery' );
     </script>
     <script>
 
-      var b = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile";
+      a({});
+
+      //var b = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile";
       var c = "http://" + document.location.hostname + ":8888/";
 
       var f = '/{z}/{x}/{y}.png';
@@ -39,13 +46,8 @@
           .setView( [-37.8, 144.9], 7 );
 
       function feat( feature, layer ) {
-        var out = [];
         if ( feature.properties ) {
-          for ( key in feature.properties ) {
-            out.push( "<dt>" + key + "</dt><dd>" + feature.properties[key] + "</dd> " );
-          }
-          layer.bindPopup( "<div  class='geojson-properties'><span class='title'>Work Centre</span><dl>" +
-                           out.join( "" ) + "</dl></div>" );
+          layer.bindPopup( t.properties( "Work Centre", feature.properties ) );
 
           var radiusX = Math.floor( Math.random() * 20 ) + 5;
           var radiusY = radiusX; //Math.floor(Math.random() * 20);
@@ -118,8 +120,8 @@
           //new L.RadialBarChartMarker( layer.getLatLng(), options )
           //new L.BarChartMarker(layer.getLatLng(), options)
 
-          overlays ["workcenres"].addLayer(
-              new L.RadialBarChartMarker( layer.getLatLng(), options )
+          overlays ["regions"].addLayer(
+              new L.RadialBarChartMarker( layer.getCenter(), options )
           );
         }
       }
@@ -127,13 +129,13 @@
       L.control.scale( { imperial: false } ).addTo( map );
 
       var underlays = {
-        //"emap": L.tileLayer( c + 'mapscape' + f, { maxZoom: 18 } ).addTo( map ),
-        "arcgis": L.tileLayer( b + g, { maxZoom: 19 } ).addTo( map )
+        "emap"   : L.tileLayer( c + 'mapscape' + f, { maxZoom: 18 } ).addTo( map ),
+        "arcgis" : L.tileLayer( c + 'arcgistopo' + f, { maxZoom: 19 } ).addTo( map )
       };
 
       var overlays = {
         "regions": L.geoJson.ajax( c + 'regions.json', {
-          //onEachFeature: feat
+          onEachFeature: feat
         } )
       };
 

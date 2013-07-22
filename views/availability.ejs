@@ -7,7 +7,7 @@
 
     <link rel="stylesheet" href="/dist/leaflet.css"/>
     <link rel="stylesheet" href="/dist/camstreet.availability.css"/>
-
+    
     <!--[if lte IE 8]>
     <link rel="stylesheet" href="/dist/leaflet.ie.css"/>
     <![endif]-->
@@ -56,8 +56,9 @@
   </head>
   <body>
     <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
-    <script src="/browserify?libs=branding,underscore,util,crossfilter,topojson"></script>
+    <script src="/browserify?libs=branding,template,underscore,util,crossfilter,topojson"></script>
     <script>
+      var a = require( 'template' );
       var b = require( 'branding' );
       var _ = require( 'underscore' );
       var u = require( 'util' );
@@ -65,224 +66,145 @@
       var t = require( 'topojson' );
     </script>
 
-    <script type="text/javascript" src="http://192.168.1.20:8888/available.js?variable=available"></script>
-    <script type="text/javascript" src="http://192.168.1.20:8888/districts.js?variable=districts"></script>
+    <script type="text/javascript" src="http://localhost:8888/available.js?variable=available"></script>
+    <script type="text/javascript" src="http://localhost:8888/districts.js?variable=districts"></script>
 
     <script>
-    var availability = function ( district, data, types, agencies ) {
-      var equalTo = equalTo || function ( a ) {
-        return function ( b ) {
-          return _.isEqual( a, b );
+      var b = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile";
+      var c = "http://" + document.location.hostname + ":8888/";
+
+      var f = '/{z}/{x}/{y}.png';
+      var g = '/{z}/{y}/{x}.png';
+
+      var map = L.map( 'map', { attributionControl: false } )
+          .setView( [-37.8, 144.9], 7 );
+
+      var info = L.control( {position: 'bottomright'} );
+
+      info.onAdd = function ( map ) {
+        this._div = L.DomUtil.create( 'div', 'info' );
+        this.update();
+        return this._div;
+      };
+
+      info.update = function ( props ) {
+        if ( props ) {
+          this._div.innerHTML = a.availability( props, available );
         }
       };
 
-      var type = function ( d ) {
-        if ( _.find( types || [ "Person" ], equalTo( d.type ) ) ) {
-          return d.type;
-        }
-        return "Other";
+      info.addTo( map );
+
+      // get color depending on population density value
+      function getColor( d ) {
+        return d > 32 ? '#800026' :
+               d > 16 ? '#BD0026' :
+               d > 8 ? '#E31A1C' :
+               d > 4 ? '#FC4E2A' :
+               d > 2 ? '#FD8D3C' :
+               d > 1 ? '#FEB24C' :
+               d > 0 ? '#FED976' :
+               '#FFEDA0';
       }
 
-      var agency = function ( d ) {
-        if ( _.find( agencies || [ "DSE", "DPI", "CFA" ], equalTo( d.agency ) ) ) {
-          return d.agency;
-        }
-        return "Other";
-      }
-
-      var add = function ( p, v ) {
-        return p.concat( v.properties.availability );
-      }
-
-      var inc = function ( p, v ) {
+      function style( feature ) {
         return {
-          'type': type( v ),
-          'agency': agency( v ),
-          'total': v.total + p.total,
-          'available': v.available + p.available
+          weight: 1,
+          opacity: 1,
+          color: 'grey',
+          dashArray: '3',
+          fillOpacity: 0.7,
+          fillColor: getColor( feature.properties.density )
         };
       }
 
-      var rem = function ( p, v ) {
-        return {};
-      }
-
-      var arr = function () {
-        return [];
-      }
-
-      var obj = function () {
-        return {
-          total: 0,
-          available: 0
-        };
-      }
-
-      var features = crossfilter( data.features );
-      var dimension = features.dimension( function ( feature ) {
-        return feature.properties.location.district;
-      } );
-
-      dimension.filter( district );
-
-      var props = crossfilter( features.groupAll().reduce( add, rem, arr ).value() );
-      var dim = props.dimension( function ( p ) {
-        return type( p ) + " " + agency( p );
-      } );
-      return dim.group().reduce( inc, rem, obj ).top( Infinity );
-    }
-
-    var b = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile";
-    var c = "http://" + document.location.hostname + ":8888/";
-
-    var f = '/{z}/{x}/{y}.png';
-    var g = '/{z}/{y}/{x}.png';
-
-    var map = L.map( 'map', { attributionControl: false } )
-        .setView( [-37.8, 144.9], 7 );
-
-    var info = L.control( {position: 'bottomright'} );
-
-    info.onAdd = function ( map ) {
-      this._div = L.DomUtil.create( 'div', 'info' );
-      this.update();
-      return this._div;
-    };
-
-    info.update = function ( props ) {
-      if ( props ) {
-        var data = availability( props['DISTRICT_N'] + " FIRE DISTRICT", available );
-        var table = _.inject( data, function ( html, item ) {
-              return html +
-                     '<tr>' +
-                     '<td>' + item.value.type + '</td>' +
-                     '<td>' + item.value.agency + '</td>' +
-                     '<td>' + item.value.total + '</td>' +
-                     '<td>' + item.value.available + '</td>' +
-                     '</tr>'
-            },
-            '<table><thead><tr><th>Type</th><th>Agency</th></Agengy><th>Total</th><th>Available</th></tr></thead><tbody>' ) +
-                    '</tbody></table>';
-
-        this._div.innerHTML = '<h4>Resource Availability</h4>' +
-                              (props ? '<b class="label">' + props['REGION_NAM'].toLocaleLowerCase() + ' - ' +
-                                       props['DISTRICT_N'].toLocaleLowerCase() + '</b><br/>' +
-                                       '<table>' + table + '</table>'
-                                  :
-                               'Hover over a state');
-      }
-
-    };
-
-    info.addTo( map );
-
-    // get color depending on population density value
-    function getColor( d ) {
-      return d > 32 ? '#800026' :
-             d > 16 ? '#BD0026' :
-             d > 8 ? '#E31A1C' :
-             d > 4 ? '#FC4E2A' :
-             d > 2 ? '#FD8D3C' :
-             d > 1 ? '#FEB24C' :
-             d > 0 ? '#FED976' :
-             '#FFEDA0';
-    }
-
-    function style( feature ) {
-      return {
-        weight: 1,
-        opacity: 1,
-        color: 'grey',
-        dashArray: '3',
-        fillOpacity: 0.7,
-        fillColor: getColor( feature.properties.density )
-      };
-    }
-
-    function highlightFeature( e ) {
-      var layer = e.target;
-      layer.setStyle( {
-        weight: 2,
-        color: '#666',
-        dashArray: '',
-        fillOpacity: 0.7
-      } );
-      if ( !L.Browser.ie && !L.Browser.opera ) {
-        layer.bringToFront();
-      }
-      info.update( layer.feature.properties );
-    }
-
-    function resetHighlight( name ) {
-      return function ( e ) {
-        overlays[name].resetStyle( e.target );
-        info.update();
-      }
-    }
-
-    function zoomToFeature( e ) {
-      map.fitBounds( e.target.getBounds() );
-    }
-
-    function onEachFeature( name ) {
-      return function ( feature, layer ) {
-        layer.on( {
-          mouseover: highlightFeature,
-          mouseout: resetHighlight( name ),
-          click: zoomToFeature
+      function highlightFeature( e ) {
+        var layer = e.target;
+        layer.setStyle( {
+          weight: 2,
+          color: '#666',
+          dashArray: '',
+          fillOpacity: 0.7
         } );
+        if ( !L.Browser.ie && !L.Browser.opera ) {
+          layer.bringToFront();
+        }
+        info.update( layer.feature.properties );
       }
-    }
 
-    /*
-     var legend = L.control({position: 'bottomright'});
+      function resetHighlight( name ) {
+        return function ( e ) {
+          overlays[name].resetStyle( e.target );
+          info.update();
+        }
+      }
 
-     legend.onAdd = function (map) {
+      function zoomToFeature( e ) {
+        map.fitBounds( e.target.getBounds() );
+      }
 
-     var div = L.DomUtil.create('div', 'info legend'),
-     grades = [0, 10, 20, 50, 100, 200, 500, 1000],
-     labels = [],
-     from, to;
+      function onEachFeature( name ) {
+        return function ( feature, layer ) {
+          layer.on( {
+            mouseover: highlightFeature,
+            mouseout: resetHighlight( name ),
+            click: zoomToFeature
+          } );
+        }
+      }
 
-     for (var i = 0; i < grades.length; i++) {
-     from = grades[i];
-     to = grades[i + 1];
+      /*
+       var legend = L.control({position: 'bottomright'});
 
-     labels.push(
-     '<i style="background:' + getColor(from + 1) + '"></i> ' +
-     from + (to ? '&ndash;' + to : '+'));
-     }
+       legend.onAdd = function (map) {
 
-     div.innerHTML = labels.join('<br>');
-     return div;
-     };
+       var div = L.DomUtil.create('div', 'info legend'),
+       grades = [0, 10, 20, 50, 100, 200, 500, 1000],
+       labels = [],
+       from, to;
 
-     legend.addTo(map);
-     */
+       for (var i = 0; i < grades.length; i++) {
+       from = grades[i];
+       to = grades[i + 1];
 
-    var underlays = {
-      //"emap": L.tileLayer( c + 'mapscape' + f, { maxZoom: 18 } ).addTo( map ),
-      //"vicmap": L.tileLayer( c + 'vicmap' + f, { maxZoom: 18 } ).addTo( map ),
-      "arcgis": L.tileLayer( b + g, { maxZoom: 19 } ).addTo( map )
-    };
+       labels.push(
+       '<i style="background:' + getColor(from + 1) + '"></i> ' +
+       from + (to ? '&ndash;' + to : '+'));
+       }
 
-    var overlays = {
-      "districts": L.geoJson( t.feature( districts, districts.objects['DSE_LF_DISTRICTS'] ), {
-        style: style,
-        onEachFeature: onEachFeature( "districts" )
-      } )
-      //"districts": L.geoJson.ajax( c + 'districts.json', {
-      //  style: style,
-      //  onEachFeature: onEachFeature( "districts" )
-      //} )
-      //"regions": L.geoJson.ajax( c + 'regions.json', {
-      //  style: style,
-      //  onEachFeature: onEachFeature
-      //} )
-    };
+       div.innerHTML = labels.join('<br>');
+       return div;
+       };
 
-    L.control.layers( underlays, overlays ).addTo( map );
-    L.control.scale( { imperial: false } ).addTo( map );
+       legend.addTo(map);
+       */
+
+      var underlays = {
+        "emap"          : L.tileLayer( c + 'mapscape' + f, { maxZoom: 18 } ).addTo( map ),
+        "elevation"     : L.tileLayer( c + 'elevation' + f, { maxZoom: 18 } ).addTo( map ),
+        //"vicmap"      : L.tileLayer( c + 'vicmap' + f, { maxZoom: 18 } ).addTo( map ),
+        "arcgis topo"   : L.tileLayer( c + 'arcgistopo' + f, { maxZoom: 19 } ).addTo( map ),
+        "arcgis relief" : L.tileLayer( c + 'arcgisrelief' + f, { maxZoom: 19 } ).addTo( map ),
+        "arcgis"        : L.tileLayer( b + g, { maxZoom: 19 } ).addTo( map )
+      };
+
+      var overlays = {
+        "districts": L.geoJson( t.feature( districts, districts.objects['DSE_LF_DISTRICTS'] ), {
+          style: style,
+          onEachFeature: onEachFeature( "districts" )
+        } )
+        //"districts": L.geoJson.ajax( c + 'districts.json', {
+        //  style: style,
+        //  onEachFeature: onEachFeature( "districts" )
+        //} )
+        //"regions": L.geoJson.ajax( c + 'regions.json', {
+        //  style: style,
+        //  onEachFeature: onEachFeature
+        //} )
+      };
+
+      L.control.layers( underlays, overlays ).addTo( map );
+      L.control.scale( { imperial: false } ).addTo( map );
 
     </script>
   </body>

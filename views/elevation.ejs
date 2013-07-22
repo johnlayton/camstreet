@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 
     <link rel="stylesheet" href="/dist/leaflet.css"/>
-    <link rel="stylesheet" href="/dist/leaflet-search.css" />
 
     <!--[if lte IE 8]>
     <link rel="stylesheet" href="/dist/leaflet.ie.css"/>
@@ -14,7 +13,6 @@
 
     <script src="/dist/leaflet-src.js"></script>
     <script src="/dist/leaflet.ajax.js"></script>
-    <script src="/dist/leaflet-search.js"></script>
 
     <% if ( agent.indexOf( 'Mobile' ) > 0 ) {%>
     <script src="/dist/cordova-2.3.0.js"></script>
@@ -23,13 +21,16 @@
   </head>
   <body>
     <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
-    <script src="/browserify?libs=branding,template"></script>
+
+    <!--<script type="text/javascript" src="http://localhost:8888/elevation.js?variable=elevation"></script>-->
+
+    <script src="/browserify?libs=branding,topojson"></script>
     <script>
       var b = require( 'branding' );
-      var t = require( 'template' );
+      var t = require( 'topojson' );
     </script>
     <script>
-      var b = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile";
+
       var c = "http://" + document.location.hostname + ":8888/";
 
       var f = '/{z}/{x}/{y}.png';
@@ -38,35 +39,25 @@
       var map = L.map( 'map', { attributionControl: false } )
           .setView( [-37.8, 144.9], 7 );
 
+
       L.control.scale( { imperial: false } ).addTo( map );
 
       var underlays = {
         "emap"   : L.tileLayer( c + 'mapscape' + f, { maxZoom: 18 } ).addTo( map ),
-        "arcgis" : L.tileLayer( b + g, { maxZoom: 19 } ).addTo( map )
+        "arcgis" : L.tileLayer( c + 'arcgistopo' + f, { maxZoom: 19 } ).addTo( map )
       };
 
       var overlays = {
-        "airfields": L.geoJson.ajax( c + 'airfields.json', {
-          title: 'Airfields',
-          val: 100,
-          onEachFeature: feature( 'Airfield' ) } ).addTo( map )
+        //"elevation": L.geoJson( t.feature( elevation, districts.objects['DSE_LF_DISTRICTS'] ), {
+        //  style: style,
+        //  onEachFeature: onEachFeature( "districts" )
+        //} )
+        "elevation": L.geoJson.ajax( c + 'elevation_100.json', {
+        } )
       };
 
       L.control.layers( underlays, overlays ).addTo( map );
 
-      L.control.search({
-        position: 'topright',
-        layer: overlays["airfields"]
-      } ).addTo(map);
-
-      function feature( type ) {
-        return function ( feature, layer ) {
-          if ( feature.properties ) {
-            layer.bindPopup( t.properties( type, feature.properties ) );
-            layer.options.title = feature.properties['DESC4'];
-          }
-        };
-      }
     </script>
   </body>
 </html>

@@ -10,6 +10,7 @@ var connect = require( 'connect' )
   , uuid = require( 'node-uuid' )
   , http = require( 'http' )
   , colors = require( 'colors' )
+  , brfs = require( 'brfs' )
   , merge = require( './lib/camstreet.merge.js' );
 
 var nano = require( 'nano' )( 'http://localhost:5984' );
@@ -114,6 +115,14 @@ app.get( "/terrain", function ( req, res ) {
   var agent = req.headers['user-agent']
   res.render( 'terrain', {
     title: 'Terrain Demo',
+    agent: agent
+  } );
+} )
+
+app.get( "/elevation", function ( req, res ) {
+  var agent = req.headers['user-agent']
+  res.render( 'elevation', {
+    title: 'Elevation Demo',
     agent: agent
   } );
 } )
@@ -242,6 +251,14 @@ app.get( "/conference/:name", function ( req, res ) {
   } );
 } )
 
+app.get( "/angular", function ( req, res ) {
+  var agent = req.headers['user-agent']
+  res.render( 'angular', {
+    title: 'Angular',
+    agent: agent
+  } );
+} );
+
 app.get( "/debug", function ( req, res ) {
   var agent = req.headers['user-agent']
   res.render( 'debug', {
@@ -251,9 +268,21 @@ app.get( "/debug", function ( req, res ) {
 } );
 
 var libs = {
+  hyperglue: {
+    library: 'hyperglue',
+    options: { expose: 'hyperglue' }
+  },
+  geometry: {
+    library: './lib/camstreet.geometry.js',
+    options: { expose: 'geometry' }
+  },
   merge: {
     library: './lib/camstreet.merge.js',
     options: { expose: 'merge' }
+  },
+  template: {
+    library: './lib/camstreet.template.js',
+    options: { expose: 'template' }
   },
   conference: {
     library: './lib/camstreet.conference.js',
@@ -304,25 +333,36 @@ var libs = {
     options: { expose: 'socket.io' }
   },
   geohash: {
-    library: 'geohash'
+    library: 'geohash',
+    options: { expose: 'geohash' }
   },
   util: {
-    library: 'util'
+    library: 'util',
+    options: { expose: 'util' }
   },
   d3: {
-    library: 'd3'
+    library: 'd3',
+    options: { expose: 'd3' }
   },
   traverse: {
-    library: 'traverse'
+    library: 'traverse',
+    options: { expose: 'traverse' }
   },
   http: {
-    library: 'http-browserify'
+    library: 'http-browserify',
+    options: { expose: 'http-browserify' }
   },
   underscore: {
-    library: 'underscore'
+    library: 'underscore',
+    options: { expose: 'underscore' }
+  },
+  angular: {
+    library: 'angular-browserify',
+    options: { expose: 'angular' }
   },
   crossfilter: {
-    library: 'crossfilter'
+    library: 'crossfilter',
+    options: { expose: 'crossfilter' }
   }
 }
 
@@ -339,19 +379,29 @@ app.get( "/browserify/load/:lib", function ( req, res ) {
   res.set( "Content-Type", "application/javascript" );
   browser().require( libs[req.params.lib].library,
       libs[req.params.lib].options )
-    .bundle(function(err,src){})
+    .transform( 'brfs' )
+    .bundle( function ( err, src ) {
+      if ( err ) {
+        console.log( util.inspect( err ) );
+      }
+    } )
     .pipe( oppressor( req ) )
     .pipe( res )
 } );
 
 app.get( "/browserify", function ( req, res ) {
   res.set( "Content-Type", "application/javascript" );
-  _.inject( req.param('libs' ) ? req.param('libs' ).split(',') : _.keys(libs), function( b, include ) {
+  _.inject( req.param( 'libs' ) ? req.param( 'libs' ).split( ',' ) : _.keys( libs ), function ( b, include ) {
     return libs[include].options ?
            b.require( libs[include].library, libs[include].options ) :
            b.require( libs[include].library )
   }, browser() )
-    .bundle(function(err,src){})
+    .transform( 'brfs' )
+    .bundle( function ( err, src ) {
+      if ( err ) {
+        console.log( util.inspect( err ) );
+      }
+    } )
     .pipe( oppressor( req ) )
     .pipe( res )
 } );

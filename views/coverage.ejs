@@ -22,24 +22,27 @@
   </head>
   <body>
     <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
-    <script src="/browserify?libs=branding,coverage,markers,util"></script>
+    <script src="/browserify?libs=branding,coverage,markers,util,template"></script>
     <script>
       var b = require( 'branding' );
       var c = require( 'coverage' );
+      var t = require( 'template' );
       var m = require( 'markers' );
       var u = require( 'util' );
     </script>
     <script>
       m( {
         point: function ( geojson, latlng ) {
-          console.log( u.inspect( geojson ) );
           if ( geojson.properties['TYPENAME6'] === 'AIRFIELD' ) {
+            console.log( "Airfield" );
             return new L.Marker( latlng );
           }
           if ( geojson.properties['TYPENAME6'] === 'HELIPAD' ) {
+            console.log( "Helipad" );
             return new L.CircleMarker( latlng );
           }
           if ( geojson.properties['TYPENAME6'] === 'STAGING AREA' ) {
+            console.log( "Staging Area" );
             return new L.CircleMarker( latlng );
           }
         }
@@ -73,15 +76,8 @@
 
       function feature( type ) {
         return function ( feature, layer ) {
-          var out = [];
           if ( feature.properties ) {
-            for ( key in feature.properties ) {
-              out.push( "<dt>" + key + "</dt><dd>" + feature.properties[key] + "</dd> " );
-            }
-            layer.bindPopup( "<div  class='geojson-properties'>" +
-                             "<span class='title'>" + type + "</span>" +
-                             "<dl>" + out.join( "" ) + "</dl>" +
-                             "</div>" );
+            layer.bindPopup( t.properties( type, feature.properties ) )
             layer.options.title = feature.properties['DESC4'];
           }
         };

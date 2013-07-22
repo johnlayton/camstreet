@@ -30,10 +30,7 @@
       var zxy = '/{z}/{x}/{y}.png';
       var zyx = '/{z}/{y}/{x}.png';
 
-      var map = L.map( 'map', { attributionControl: false } )
-          .setView( [-37.8, 144.9], 7 );
-
-      L.control.scale( { imperial: false } ).addTo( map );
+      var map = L.map( 'map', { attributionControl: false } ).setView( [-37.8, 144.9], 7 );
 
       //var a = "http://emap.dse.vic.gov.au/ArcGIS/rest/services/mapscape/MapServer/tile";
       var a = "http://" + document.location.hostname + ":8888/mapscape";

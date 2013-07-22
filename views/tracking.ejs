@@ -20,9 +20,10 @@
   </head>
   <body>
     <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
-    <script src="/browserify?libs=branding,io"></script>
+    <script src="/browserify?libs=branding,template,io"></script>
     <script>
       var b = require( 'branding' );
+      var t = require( 'template' );
       var i = require( 'socket.io' );
     </script>
     <script>
@@ -58,7 +59,7 @@
                 if ( !assets['home'] ) {
                   assets['home'] = new L.Marker( [ position.coords.latitude,
                                                    position.coords.longitude ] );
-                  assets['home'].bindPopup('x = ' + position.coords.latitude + ', y = ' + position.coords.longitude);
+                  assets['home'].bindPopup( t.properties( "home", position.coords ) );
                   assets['home'].addTo( map );
                 }
                 else {
@@ -70,30 +71,29 @@
                 console.log( error );
               }
           );
-          /*
-           setInterval(function() {
-           navigator.geolocation.getCurrentPosition(
-           function( position ) {
+          setInterval( function () {
+            navigator.geolocation.getCurrentPosition(
+                function ( position ) {
 
-           //console.log( u.inspect( position ) );
+                  //console.log( u.inspect( position ) );
 
-           asset.emit( "position", position );
-           if (!assets['home']) {
-           assets['home'] = new L.Marker([ position.coords.latitude,
-           position.coords.longitude ]);
-           assets['home'].bindPopup('<p>hello<ol><li>husdhuhf</li></ol></p>').addTo(map);
-           //assets['home'].addTo(map);
-           } else {
-           assets['home'].setLatLng([ position.coords.latitude,
-           position.coords.longitude ])
-           }
-           },
-           function( err ) {
-           console.log( err );
-           }
-           );
-           }, 1000);
-           */
+                  asset.emit( "position", position );
+                  if ( !assets['home'] ) {
+                    assets['home'] = new L.Marker( [ position.coords.latitude,
+                                                     position.coords.longitude ] );
+                    assets['home'].bindPopup( '<p>hello<ol><li>husdhuhf</li></ol></p>' ).addTo( map );
+                    //assets['home'].addTo(map);
+                  }
+                  else {
+                    assets['home'].setLatLng( [ position.coords.latitude,
+                                                position.coords.longitude ] )
+                  }
+                },
+                function ( err ) {
+                  console.log( err );
+                }
+            );
+          }, 10000 );
         } );
         asset.on( 'position', function ( data ) {
           if ( !assets[data.identity] ) {

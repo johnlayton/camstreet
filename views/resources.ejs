@@ -24,9 +24,10 @@
   </head>
   <body>
     <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
-    <script src="/browserify?libs=branding,markers,underscore"></script>
+    <script src="/browserify?libs=branding,template,markers,underscore"></script>
     <script>
       var b = require( 'branding' );
+      var t = require( 'template' );
       var m = require( 'markers' );
       var _ = require( 'underscore' );
     </script>
@@ -51,15 +52,8 @@
         return function ( feature, layer ) {
           var out = [];
           if ( feature.properties ) {
-            for ( key in feature.properties ) {
-              out.push( "<dt>" + key + "</dt><dd>" + feature.properties[key] + "</dd> " );
-            }
             var label = feature.properties["Label"].toLocaleLowerCase();
-            layer.bindPopup( "<div class='geojson-properties'>" +
-                             "<span class='title'>" + label + " " + type + "</span>" +
-                             "<dl>" + out.join( "" ) + "</dl>" +
-                             "</div>" );
-
+            layer.bindPopup( t.properties( label, feature.properties ) );
 
             optionsA = {
               position: {
