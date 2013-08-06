@@ -199,6 +199,22 @@ app.get( "/search", function ( req, res ) {
   } );
 } )
 
+app.get( "/firebase", function ( req, res ) {
+  var agent = req.headers['user-agent']
+  res.render( 'firebase', {
+    title: 'Firebase  Demo',
+    agent: agent
+  } );
+} )
+
+app.get( "/firebase/show", function ( req, res ) {
+  var agent = req.headers['user-agent']
+  res.render( 'firebase_show', {
+    title: 'Firebase  Demo',
+    agent: agent
+  } );
+} )
+
 app.get( "/resources", function ( req, res ) {
   var agent = req.headers['user-agent']
   res.render( 'resources', {
@@ -323,6 +339,10 @@ var libs = {
   topojson: {
     library: './lib/camstreet.topojson.js',
     options: { expose: 'topojson' }
+  },
+  project: {
+    library: './lib/camstreet.project.js',
+    options: { expose: 'project' }
   },
   jquery: {
     library: 'jquery-browserify',
