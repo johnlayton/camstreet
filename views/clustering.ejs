@@ -1,0 +1,293 @@
+<!doctype html>
+<html>
+  <head>
+    <title><%= title %></title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+
+    <link rel="stylesheet" href="/dist/leaflet.css"/>
+    <link rel="stylesheet" href="/dist/camstreet.clustering.css"/>
+
+    <link rel="stylesheet" href="/dist/leaflet.fullscreen.css"/>
+    <link rel="stylesheet" href="/dist/leaflet.markercluster.css"/>
+    <link rel="stylesheet" href="/dist/leaflet.markercluster.default.css"/>
+
+    <!--[if lte IE 8]>
+    <link rel="stylesheet" href="/dist/leaflet.ie.css"/>
+    <link rel="stylesheet" href="/dist/leaflet.markercluster.default.ie.css"/>
+    <![endif]-->
+
+    <script src="/dist/leaflet-src.js"></script>
+    <script src="/dist/leaflet.ajax.js"></script>
+    <script src="/dist/leaflet.hash.js"></script>
+    <script src="/dist/leaflet.markercluster-src.js"></script>
+    <script src="/dist/leaflet.fullscreen.js"></script>
+
+    <% if ( agent.indexOf( 'Mobile' ) > 0 ) {%>
+    <script src="/dist/cordova-2.3.0.js"></script>
+    <% } else { %>
+    <% } %>
+
+    <style>
+      div.geojson-properties .title {
+        width: 100%;
+        text-align: center;
+        font-weight: bold;
+        font-size: large;
+        color: darkgrey;
+        clear: both;
+        display: block;
+        text-transform: capitalize;
+      }
+
+      div.geojson-properties dl {
+        border: grey 3px double;
+        padding: 0.5em;
+      }
+
+      div.geojson-properties dl dt {
+        float: left;
+        clear: left;
+        width: 100px;
+        text-align: right;
+        font-weight: bold;
+        color: black;
+      }
+
+      div.geojson-properties dl dt:after {
+        content: " : ";
+      }
+
+      div.geojson-properties dl dd {
+        margin: 0 0 0 110px;
+        padding: 0 0 0.5em 0;
+      }
+
+      div.cluster-properties {
+        -moz-border-radius: 5px;
+        -webkit-border-radius: 5px;
+        border: darkgrey 1px solid;
+        background-color: white;
+        opacity: 0.5;
+        color: black;
+        padding: 3px;
+      }
+
+      div.cluster-properties:hover {
+        opacity: 1;
+      }
+
+      div.cluster-properties div.details {
+        text-align: center;
+        margin: 5px auto;
+      }
+
+      div.cluster-properties div.detail {
+        margin: 0px 5px;
+        display: inline-block;
+        text-decoration: none;
+        color: black;
+        font-weight: bolder;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+    <script src="/browserify/load?libs=crossfilter,branding,template,underscore,util,topojson,clustering,handlebars"></script>
+    <script>
+      var c = require( 'crossfilter' );
+      var a = require( 'template' );
+      var b = require( 'branding' );
+      var _ = require( 'underscore' );
+      var u = require( 'util' );
+      var t = require( 'topojson' );
+      var l = require( 'clustering' );
+      var h = require( 'handlebars' );
+    </script>
+
+    <!--<script src="javascript/leaflet.js"></script>-->
+    <!--<script src="javascript/leaflet.ajax.js"></script>-->
+    <!--<script src="javascript/leaflet.search.js"></script>-->
+    <!--<script src="javascript/leaflet.hash.js"></script>-->
+    <!--<script src="javascript/handlebars.js"></script>-->
+    <!--<script src="javascript/leaflet.markercluster.js"></script>-->
+    <!--<script src="javascript/leaflet.fullscreen.js"></script>-->
+    <!--<script src="javascript/leaflet.clusters.js"></script>-->
+
+    <!--<script src="http://trnsoa01.fire.dse.vic.gov.au/rats/rest/vehicle/types?variable=types"></script>-->
+    <!--<script src="http://localhost:8888/telemetry.jsonv?variable=telemetry"></script>-->
+
+    <script id="tmpl" type="text/html">
+      <div class='geojson-properties'>
+        <h3>Telemetry</h3>
+        <dl>
+          {{#telemetry}}
+          <dt>{{name}}</dt>
+          <dd>{{value}}</dd>
+          {{/telemetry}}
+        </dl>
+        <h3>Vehicle</h3>
+        <dl>
+          {{#vehicle}}
+          <dt>{{name}}</dt>
+          <dd>{{value}}</dd>
+          {{/vehicle}}
+        </dl>
+        <h3>Radio</h3>
+        <dl>
+          {{#radio}}
+          <dt>{{name}}</dt>
+          <dd>{{value}}</dd>
+          {{/radio}}
+        </dl>
+      </div>
+    </script>
+
+    <script id="cluster" type="text/html">
+      <div class='cluster-properties'>
+        <div class="title">Cluster ({{total}}) [{{ lng }}, {{ lat }}]</div>
+        <div class="details">
+          {{#counts}}
+          <div class="detail" href="#">{{#image}}<img title="{{name}}" src="{{ image }}"/>{{/image}}<div>{{value}}</div></div>
+          {{/counts}}
+        </div>
+      </div>
+    </script>
+
+    <script>
+      var b = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile";
+      var g = '/{z}/{y}/{x}.png';
+
+      //var app = document.location.origin + '${pageContext.request.contextPath}';
+
+      var app = "http://localhost:8080"
+
+      var map = L.map( 'map', { attributionControl: false } )
+          .setView( [-37.8, 144.9], 7 );
+
+      L.control.scale( { imperial: false } ).addTo( map );
+
+      var underlays = {
+        "arcgis": L.tileLayer( b + g, { maxZoom: 16 } ).addTo( map )
+      };
+
+      var overlays = {};
+
+      function getTemplate( id )
+      {
+        return document.getElementById( id ).innerHTML;
+      }
+
+      function properties( p, x )
+      {
+        var out = []
+        for ( i in p )
+        {
+          if ( x.indexOf( i ) === -1 )
+          {
+            out.push( { name: i, value: p[i] ? p[i] : " -- ", image:  image_url( to_json( i ) ) } );
+          }
+        }
+        return out;
+      }
+
+      function to_json( text )
+      {
+        return text.toLocaleLowerCase().replace( / /g, '_' )
+      }
+
+      function from_json( text )
+      {
+        return text.toLocaleLowerCase().replace( /_/g, ' ' )
+      }
+
+      function title( properties )
+      {
+        return properties["vehicle"][ "ifis_name" ] ? properties["vehicle"][ "ifis_name" ] :
+               ( properties["radio"][ "ifis_name" ] ? properties["radio"][ "ifis_name" ] : "Radio" );
+      }
+
+      function image_url( type )
+      {
+        return app + '/images/rt_' + type + '.gif';
+      }
+
+      function create_icon( type )
+      {
+        return L.icon( { iconUrl: image_url( type ), iconSize: [25, 25] } );
+      }
+
+      function icon( properties )
+      {
+        return create_icon( properties["vehicle"][ "ifis_type" ] ? to_json( properties["vehicle"][ "ifis_type" ] ) : "unknown" );
+      }
+
+      //var layers = L.control.layers( underlays, overlays ).addTo(map);
+      var clusters = L.control.clusters( underlays, overlays, {
+        iconHtml: function(cluster) {
+          var children = cluster.getAllChildMarkers();
+          var details = {};
+          for( var i = 0; i < children.length; i++ )
+          {
+            var props = children[i].feature.properties;
+            var ifis_type = "unknown";
+            if ( props.vehicle && props.vehicle.ifis_type )
+            {
+              ifis_type = from_json( props.vehicle.ifis_type );
+            }
+            details[ifis_type] = details[ifis_type] ? details[ifis_type] + 1 : 1
+          }
+          var model = {
+            lat: L.Util.formatNum( cluster.getLatLng().lat, 2 ),
+            lng: L.Util.formatNum( cluster.getLatLng().lng, 2 ),
+            counts: properties( details, [] ),
+            total: cluster.getChildCount()
+          };
+          return h.to_html( getTemplate( "cluster" ), model );
+        }
+      } ).addTo( map );
+
+      var types = types ? types : {
+        'unknown' : 1,
+        'passenger_vehicle' : 1,
+        'fire_tanker' : 1,
+        'truck' : 1
+      };
+      for ( type in  types )
+      {
+        //var layer = L.geoJson.ajax( app + '/rest/telemetry?types=' + type, {
+        var layer = L.geoJson.ajax( 'http://localhost:8888/telemetry.json?types=' + type, {
+          dataType: 'json',
+          title: type + " " + types[type],
+          //title: "title",
+          onEachFeature: function ( feature, layer )
+          {
+            if ( feature.properties )
+            {
+              var model = {
+                telemetry: properties( feature.properties, ['radio','vehicle']  ),
+                radio: properties( feature.properties.radio, [] ),
+                vehicle: properties( feature.properties.vehicle, [] )
+              };
+              layer.bindPopup( h.to_html( getTemplate( "tmpl" ), model ) );
+            }
+          },
+          pointToLayer: function ( feature, latlng )
+          {
+            return L.marker( latlng, {
+              icon: icon( feature.properties ),
+              title: title( feature.properties )
+            } );
+            return marker;
+          }
+        } );
+        layer.on( "data:loaded", function() {
+          clusters.addOverlay( this, this.options.title );
+        } );
+      }
+
+      L.control.fullscreen().addTo(map);
+      L.hash(map);
+    </script>
+  </body>
+</html>

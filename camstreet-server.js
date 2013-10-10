@@ -101,7 +101,15 @@ app.get( "/coverage", function ( req, res ) {
     title: 'Coverage Demo',
     agent: agent
   } );
-} )
+} );
+
+app.get( "/polymer", function ( req, res ) {
+  var agent = req.headers['user-agent'];
+  res.render( 'polymer', {
+    title: 'Polymer Demo',
+    agent: agent
+  } );
+} );
 
 app.get( "/wax", function ( req, res ) {
   var agent = req.headers['user-agent']
@@ -109,7 +117,7 @@ app.get( "/wax", function ( req, res ) {
     title: 'Wax Demo',
     agent: agent
   } );
-} )
+} );
 
 app.get( "/terrain", function ( req, res ) {
   var agent = req.headers['user-agent']
@@ -117,7 +125,7 @@ app.get( "/terrain", function ( req, res ) {
     title: 'Terrain Demo',
     agent: agent
   } );
-} )
+} );
 
 app.get( "/elevation", function ( req, res ) {
   var agent = req.headers['user-agent']
@@ -125,7 +133,7 @@ app.get( "/elevation", function ( req, res ) {
     title: 'Elevation Demo',
     agent: agent
   } );
-} )
+} );
 
 app.get( "/google", function ( req, res ) {
   var agent = req.headers['user-agent']
@@ -133,7 +141,7 @@ app.get( "/google", function ( req, res ) {
     title: 'Google Demo',
     agent: agent
   } );
-} )
+} );
 
 app.get( "/regions", function ( req, res ) {
   var agent = req.headers['user-agent']
@@ -141,7 +149,7 @@ app.get( "/regions", function ( req, res ) {
     title: 'Regions Demo',
     agent: agent
   } );
-} )
+} );
 
 app.get( "/notification", function ( req, res ) {
   var agent = req.headers['user-agent']
@@ -149,7 +157,7 @@ app.get( "/notification", function ( req, res ) {
     title: 'Notification Demo',
     agent: agent
   } );
-} )
+} );
 
 app.get( "/drawing", function ( req, res ) {
   var agent = req.headers['user-agent']
@@ -157,7 +165,7 @@ app.get( "/drawing", function ( req, res ) {
     title: 'Drawing Demo',
     agent: agent
   } );
-} )
+} );
 
 app.get( "/availability", function ( req, res ) {
   var agent = req.headers['user-agent']
@@ -165,7 +173,15 @@ app.get( "/availability", function ( req, res ) {
     title: 'Availability Demo',
     agent: agent
   } );
-} )
+} );
+
+app.get( "/clustering", function ( req, res ) {
+  var agent = req.headers['user-agent']
+  res.render( 'clustering', {
+    title: 'Clustering Demo',
+    agent: agent
+  } );
+} );
 
 app.get( "/temporal", function ( req, res ) {
   var agent = req.headers['user-agent']
@@ -173,7 +189,7 @@ app.get( "/temporal", function ( req, res ) {
     title: 'Temporal Demo',
     agent: agent
   } );
-} )
+} );
 
 app.get( "/following", function ( req, res ) {
   var agent = req.headers['user-agent']
@@ -181,7 +197,7 @@ app.get( "/following", function ( req, res ) {
     title: 'Following  Demo',
     agent: agent
   } );
-} )
+} );
 
 app.get( "/hashing", function ( req, res ) {
   var agent = req.headers['user-agent']
@@ -189,7 +205,7 @@ app.get( "/hashing", function ( req, res ) {
     title: 'Hashing  Demo',
     agent: agent
   } );
-} )
+} );
 
 app.get( "/search", function ( req, res ) {
   var agent = req.headers['user-agent']
@@ -197,7 +213,7 @@ app.get( "/search", function ( req, res ) {
     title: 'Search  Demo',
     agent: agent
   } );
-} )
+} );
 
 app.get( "/firebase", function ( req, res ) {
   var agent = req.headers['user-agent']
@@ -205,7 +221,7 @@ app.get( "/firebase", function ( req, res ) {
     title: 'Firebase  Demo',
     agent: agent
   } );
-} )
+} );
 
 app.get( "/firebase/show", function ( req, res ) {
   var agent = req.headers['user-agent']
@@ -213,7 +229,7 @@ app.get( "/firebase/show", function ( req, res ) {
     title: 'Firebase  Demo',
     agent: agent
   } );
-} )
+} );
 
 app.get( "/resources", function ( req, res ) {
   var agent = req.headers['user-agent']
@@ -221,7 +237,7 @@ app.get( "/resources", function ( req, res ) {
     title: 'Resources  Demo',
     agent: agent
   } );
-} )
+} );
 
 app.get( "/baselayers", function ( req, res ) {
   var agent = req.headers['user-agent']
@@ -229,7 +245,7 @@ app.get( "/baselayers", function ( req, res ) {
     title: 'Base Layers  Demo',
     agent: agent
   } );
-} )
+} );
 
 app.get( "/tracking", function ( req, res ) {
   var agent = req.headers['user-agent'];
@@ -238,7 +254,7 @@ app.get( "/tracking", function ( req, res ) {
     id: uuid(),
     agent: agent
   } );
-} )
+} );
 
 app.get( "/tracking/:id", function ( req, res ) {
   var agent = req.headers['user-agent'];
@@ -247,7 +263,7 @@ app.get( "/tracking/:id", function ( req, res ) {
     id: req.params.id,
     agent: agent
   } );
-} )
+} );
 
 app.get( "/conference", function ( req, res ) {
   var agent = req.headers['user-agent'];
@@ -256,7 +272,7 @@ app.get( "/conference", function ( req, res ) {
     name: uuid(),
     agent: agent
   } );
-} )
+} );
 
 app.get( "/conference/:name", function ( req, res ) {
   var agent = req.headers['user-agent'];
@@ -265,7 +281,7 @@ app.get( "/conference/:name", function ( req, res ) {
     name: req.params.name,
     agent: agent
   } );
-} )
+} );
 
 app.get( "/angular", function ( req, res ) {
   var agent = req.headers['user-agent']
@@ -308,6 +324,10 @@ var libs = {
     library: './lib/camstreet.branding.js',
     options: { expose: 'branding' }
   },
+  clustering: {
+    library: './lib/camstreet.clustering.js',
+    options: { expose: 'clustering' }
+  },
   notifications: {
     library: './lib/camstreet.notifications.js',
     options: { expose: 'notifications' }
@@ -339,6 +359,10 @@ var libs = {
   topojson: {
     library: './lib/camstreet.topojson.js',
     options: { expose: 'topojson' }
+  },
+  handlebars: {
+    library: './lib/camstreet.handlebars.js',
+    options: { expose: 'handlebars' }
   },
   project: {
     library: './lib/camstreet.project.js',
@@ -386,7 +410,7 @@ var libs = {
   }
 }
 
-app.get( "/browserify/show", function ( req, res ) {
+app.get( "/browserify", function ( req, res ) {
   var agent = req.headers['user-agent']
   res.render( 'browserify', {
     title: 'Browserify',
@@ -395,10 +419,13 @@ app.get( "/browserify/show", function ( req, res ) {
   } );
 } );
 
-app.get( "/browserify/load/:lib", function ( req, res ) {
+app.get( "/browserify/load", function ( req, res ) {
   res.set( "Content-Type", "application/javascript" );
-  browser().require( libs[req.params.lib].library,
-      libs[req.params.lib].options )
+  _.inject( req.param( 'libs' ) ? req.param( 'libs' ).split( ',' ) : _.keys( libs ), function ( b, include ) {
+    return libs[include].options ?
+           b.require( libs[include].library, libs[include].options ) :
+           b.require( libs[include].library )
+  }, browser() )
     .transform( 'brfs' )
     .bundle( function ( err, src ) {
       if ( err ) {
@@ -409,13 +436,10 @@ app.get( "/browserify/load/:lib", function ( req, res ) {
     .pipe( res )
 } );
 
-app.get( "/browserify", function ( req, res ) {
+app.get( "/browserify/load/:lib", function ( req, res ) {
   res.set( "Content-Type", "application/javascript" );
-  _.inject( req.param( 'libs' ) ? req.param( 'libs' ).split( ',' ) : _.keys( libs ), function ( b, include ) {
-    return libs[include].options ?
-           b.require( libs[include].library, libs[include].options ) :
-           b.require( libs[include].library )
-  }, browser() )
+  browser().require( libs[req.params.lib].library,
+      libs[req.params.lib].options )
     .transform( 'brfs' )
     .bundle( function ( err, src ) {
       if ( err ) {

@@ -22,7 +22,7 @@
   </head>
   <body>
     <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
-    <script src="/browserify?libs=branding,coverage,markers,util,template"></script>
+    <script src="/browserify/load?libs=branding,coverage,markers,util,template"></script>
     <script>
       var b = require( 'branding' );
       var c = require( 'coverage' );
@@ -34,15 +34,15 @@
       m( {
         point: function ( geojson, latlng ) {
           if ( geojson.properties['TYPENAME6'] === 'AIRFIELD' ) {
-            console.log( "Airfield" );
+            //console.log( "Airfield" );
             return new L.Marker( latlng );
           }
           if ( geojson.properties['TYPENAME6'] === 'HELIPAD' ) {
-            console.log( "Helipad" );
+            //console.log( "Helipad" );
             return new L.CircleMarker( latlng );
           }
           if ( geojson.properties['TYPENAME6'] === 'STAGING AREA' ) {
-            console.log( "Staging Area" );
+            //console.log( "Staging Area" );
             return new L.CircleMarker( latlng );
           }
         }

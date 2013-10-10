@@ -7,10 +7,10 @@
     <h4>Available Browserify Javascript Libraries</h4>
     <dl>
       <% for( property in libs ) { %>
-      <dt><%= property %></dt>
-      <dd><%= libs[property].library %> ->
-        <a href="http://localhost:8080/browserify?lib=<%= libs[property].options.expose %>"><%= libs[property].options.expose %></a>
-      </dd>
+        <dt><%= property %></dt>
+        <dd><%= libs[property].library %> ->
+          <a href="http://localhost:8080/browserify/load?lib=<%= libs[property].options.expose %>"><%= libs[property].options.expose %></a>
+        </dd>
       <% } %>
     </dl>
   </body>

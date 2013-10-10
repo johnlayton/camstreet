@@ -56,18 +56,20 @@
   </head>
   <body>
     <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
-    <script src="/browserify?libs=branding,template,underscore,util,crossfilter,topojson"></script>
+    <script src="/browserify/load?libs=crossfilter,branding,template,underscore,util,topojson"></script>
     <script>
+      var c = require( 'crossfilter' );
       var a = require( 'template' );
       var b = require( 'branding' );
       var _ = require( 'underscore' );
       var u = require( 'util' );
-      var c = require( 'crossfilter' );
       var t = require( 'topojson' );
     </script>
 
-    <script type="text/javascript" src="http://localhost:8888/available.js?variable=available"></script>
-    <script type="text/javascript" src="http://localhost:8888/districts.js?variable=districts"></script>
+    <!--<script type="text/javascript" src="http://localhost:8888/available.js?variable=available"></script>-->
+    <!--<script type="text/javascript" src="http://localhost:8888/districts.js?variable=districts"></script>-->
+    <script type="text/javascript" src="http://localhost:8888/available.jsonv?variable=available"></script>
+    <script type="text/javascript" src="http://localhost:8888/districts.jsonv?variable=districts"></script>
 
     <script>
       var b = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile";
@@ -189,7 +191,11 @@
       };
 
       var overlays = {
-        "districts": L.geoJson( t.feature( districts, districts.objects['DSE_LF_DISTRICTS'] ), {
+        //"districts": L.geoJson( t.feature( districts, districts.objects['DSE_LF_DISTRICTS'] ), {
+        //  style: style,
+        //  onEachFeature: onEachFeature( "districts" )
+        //} )
+        "districts": L.geoJson( districts, {
           style: style,
           onEachFeature: onEachFeature( "districts" )
         } )
