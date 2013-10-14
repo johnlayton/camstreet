@@ -360,6 +360,10 @@ var libs = {
     library: './lib/camstreet.topojson.js',
     options: { expose: 'topojson' }
   },
+  markercluster: {
+    library: './lib/camstreet.markercluster.js',
+    options: { expose: 'markercluster' }
+  },
   handlebars: {
     library: './lib/camstreet.handlebars.js',
     options: { expose: 'handlebars' }
@@ -407,6 +411,10 @@ var libs = {
   crossfilter: {
     library: 'crossfilter',
     options: { expose: 'crossfilter' }
+  },
+  pip: {
+    library: 'leaflet-pip',
+    options: { expose: 'pip' }
   }
 }
 

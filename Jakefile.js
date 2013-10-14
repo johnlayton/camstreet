@@ -17,6 +17,8 @@ var env = {
       dest: 'dist' },
     { src: path.join( leaf, 'Leaflet.ajax/dist' ),
       dest: 'dist' },
+    { src: path.join( leaf, 'Leaflet.pip/leaflet-pip.js' ),
+      dest: 'dist/leaflet.pip.js' },
     { src: path.join( leaf, 'Leaflet.fullscreen/Control.Fullscreen.js' ),
       dest: 'dist/leaflet.fullscreen.js' },
     { src: path.join( leaf, 'Leaflet.fullscreen/Control.Fullscreen.css' ),

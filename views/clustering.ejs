@@ -20,7 +20,7 @@
     <script src="/dist/leaflet-src.js"></script>
     <script src="/dist/leaflet.ajax.js"></script>
     <script src="/dist/leaflet.hash.js"></script>
-    <script src="/dist/leaflet.markercluster-src.js"></script>
+    <!--<script src="/dist/leaflet.markercluster-src.js"></script>-->
     <script src="/dist/leaflet.fullscreen.js"></script>
 
     <% if ( agent.indexOf( 'Mobile' ) > 0 ) {%>
@@ -93,7 +93,9 @@
   </head>
   <body>
     <div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
-    <script src="/browserify/load?libs=crossfilter,branding,template,underscore,util,topojson,clustering,handlebars"></script>
+    <script src="http://localhost:8888/regions.js?variable=regions"></script>
+    <script src="http://localhost:8888/districts.js?variable=districts"></script>
+    <script src="/browserify/load?libs=pip,crossfilter,branding,template,underscore,util,topojson,markercluster,clustering,handlebars"></script>
     <script>
       var c = require( 'crossfilter' );
       var a = require( 'template' );
@@ -101,6 +103,7 @@
       var _ = require( 'underscore' );
       var u = require( 'util' );
       var t = require( 'topojson' );
+      var m = require( 'markercluster' );
       var l = require( 'clustering' );
       var h = require( 'handlebars' );
     </script>
@@ -156,11 +159,9 @@
 
     <script>
       var b = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile";
+      var c = "http://" + document.location.hostname + ":8888/";
+      var d = "http://" + document.location.hostname + ":8080/"
       var g = '/{z}/{y}/{x}.png';
-
-      //var app = document.location.origin + '${pageContext.request.contextPath}';
-
-      var app = "http://localhost:8080"
 
       var map = L.map( 'map', { attributionControl: false } )
           .setView( [-37.8, 144.9], 7 );
@@ -209,7 +210,7 @@
 
       function image_url( type )
       {
-        return app + '/images/rt_' + type + '.gif';
+        return d + '/images/rt_' + type + '.gif';
       }
 
       function create_icon( type )
@@ -222,7 +223,36 @@
         return create_icon( properties["vehicle"][ "ifis_type" ] ? to_json( properties["vehicle"][ "ifis_type" ] ) : "unknown" );
       }
 
-      //var layers = L.control.layers( underlays, overlays ).addTo(map);
+      var grids = function( layer ) {
+        return function(map, zoom ){
+          var grids = {
+            'other': []
+          };
+          var getLabel = function (_layer){
+            if ( _layer && _layer.feature && _layer.feature.properties )
+              return _layer.feature.properties['DSE_REGI_1'];
+            else
+              return null;
+          };
+          layer.getLayers().forEach(function(_layer){
+            grids[getLabel(_layer)] = [];
+          });
+          return function(point) {
+            if ( point ) {
+              var grds = grids[getLabel(require('pip').pointInLayer(map.unproject(point, zoom), layer, true )[0])];
+              return grds ? grds : grids['other'];
+            }
+            else {
+              var grds = [];
+              for ( var i in grids ) {
+                grds.push( grids[i] )
+              }
+              return grds;
+            }
+          }
+        };
+      };
+
       var clusters = L.control.clusters( underlays, overlays, {
         iconHtml: function(cluster) {
           var children = cluster.getAllChildMarkers();
@@ -244,6 +274,14 @@
             total: cluster.getChildCount()
           };
           return h.to_html( getTemplate( "cluster" ), model );
+        },
+        clusterProfiles: {
+          'Zoom8': {
+            grids: grids( L.geoJson( regions ) )
+          },
+          'Zoom9': {
+            grids: grids( L.geoJson( districts ) )
+          }
         }
       } ).addTo( map );
 
@@ -255,11 +293,10 @@
       };
       for ( type in  types )
       {
-        //var layer = L.geoJson.ajax( app + '/rest/telemetry?types=' + type, {
+        //var layer = L.geoJson.ajax( d + '/rest/telemetry?types=' + type, {
         var layer = L.geoJson.ajax( 'http://localhost:8888/telemetry.json?types=' + type, {
           dataType: 'json',
           title: type + " " + types[type],
-          //title: "title",
           onEachFeature: function ( feature, layer )
           {
             if ( feature.properties )
@@ -285,7 +322,7 @@
           clusters.addOverlay( this, this.options.title );
         } );
       }
-
+      L.geoJson( regions ).addTo(map);
       L.control.fullscreen().addTo(map);
       L.hash(map);
     </script>
