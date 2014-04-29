@@ -11,6 +11,8 @@ var connect = require( 'connect' )
   , http = require( 'http' )
   , colors = require( 'colors' )
   , brfs = require( 'brfs' )
+  , proxy = require( 'proxy-middleware' )
+  , url = require('url')
   , merge = require( './lib/camstreet.merge.js' );
 
 var nano = require( 'nano' )( 'http://localhost:5984' );
@@ -58,7 +60,7 @@ var cross = function ( req, res, next ) {
 };
 
 app.configure( function () {
-  app.set( 'port', process.env.PORT || 8080 );
+  app.set( 'port', process.env.PORT || 3000 );
   app.set( 'views', __dirname + '/views' );
   app.set( 'view engine', 'ejs' );
   app.use( cross );
@@ -78,6 +80,7 @@ app.configure( function () {
    }));
    */
   app.use( connect.static( path.join( __dirname ) ) );
+  app.use('/thredds', proxy(url.parse('http://localhost:8080/thredds')));
   /*
    app.use(express.static(path.join(__dirname, 'public')));
    */
@@ -291,6 +294,14 @@ app.get( "/angular", function ( req, res ) {
   } );
 } );
 
+app.get( "/weather", function ( req, res ) {
+  var agent = req.headers['user-agent']
+  res.render( 'weather', {
+    title: 'Weather',
+    agent: agent
+  } );
+} );
+
 app.get( "/debug", function ( req, res ) {
   var agent = req.headers['user-agent']
   res.render( 'debug', {
@@ -303,6 +314,14 @@ var libs = {
   hyperglue: {
     library: 'hyperglue',
     options: { expose: 'hyperglue' }
+  },
+  moment: {
+    library: 'moment',
+    options: { expose: 'moment' }
+  },
+  moment_range: {
+    library: 'moment-range',
+    options: { expose: 'moment.range' }
   },
   geometry: {
     library: './lib/camstreet.geometry.js',
@@ -372,6 +391,22 @@ var libs = {
     library: './lib/camstreet.project.js',
     options: { expose: 'project' }
   },
+  jsdap: {
+    library: './lib/camstreet.jsdap.js',
+    options: { expose: 'jsdap' }
+  },
+  ol_time: {
+    library: './lib/camstreet.openlayers.time.js',
+    options: { expose: 'ol.control.TimeControl' }
+  },
+  ol_layers: {
+    library: './lib/camstreet.openlayers.layers.js',
+    options: { expose: 'ol.control.LayersControl' }
+  },
+  ol_inspect: {
+    library: './lib/camstreet.openlayers.inspect.js',
+    options: { expose: 'ol.control.InspectControl' }
+  },
   jquery: {
     library: 'jquery-browserify',
     options: { expose: 'jquery' }
@@ -415,8 +450,12 @@ var libs = {
   pip: {
     library: 'leaflet-pip',
     options: { expose: 'pip' }
+  },
+  lodash: {
+    library: 'lodash',
+    options: { expose: 'lodash' }
   }
-}
+};
 
 app.get( "/browserify", function ( req, res ) {
   var agent = req.headers['user-agent']

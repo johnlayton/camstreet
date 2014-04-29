@@ -1,0 +1,238 @@
+<!doctype html>
+<html>
+<head>
+  <title><%= title %></title>
+
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+
+  <link rel="stylesheet" href="/dist/ol-v3.0.0-beta.4.css"/>
+
+  <script src="/dist/ol-whitespace-v3.0.0-beta.4.js"></script>
+
+  <% if ( agent.indexOf( 'Mobile' ) > 0 ) {%>
+  <script src="/dist/cordova-2.3.0.js"></script>
+  <% } else { %>
+  <% } %>
+
+  <style>
+    .map {
+      height: 90%;
+      width: 100%;
+    }
+
+    .time-slider {
+      position: absolute;
+      top: 40px;
+      right: 8px;
+      background: rgba(255, 255, 255, 0.4);
+      border-radius: 10px;
+      border-style: solid;
+      border-color: #7b98bc;
+      padding: 2px;
+    }
+
+    .time-slider input {
+      font-size: 20px;
+      height: 30px;
+      width: 200px;
+      line-height: 26px;
+    }
+
+    .layers {
+      position: absolute;
+      top: 110px;
+      right: 8px;
+      background: rgba(255, 255, 255, 0.4);
+      border-radius: 10px;
+      border-style: solid;
+      border-color: #7b98bc;
+      padding: 2px;
+    }
+
+    .layers input {
+      font-size: 20px;
+      height: 30px;
+      width: 150px;
+      line-height: 26px;
+    }
+
+    .layers ul {
+      list-style: none;
+      padding: 0px;
+      margin: 5px;
+    }
+
+    .inspect {
+      font: 10px sans-serif;
+      position: absolute;
+      bottom: 20px;
+      left: 8px;
+    }
+
+    .inspect svg {
+      height: 300px;
+      width: 600px;
+    }
+
+    .inspect svg .axis path,
+    .inspect svg .axis line {
+      fill: none;
+      stroke: #000;
+      shape-rendering: crispEdges;
+    }
+
+    /*.inspect svg .x.axis path {*/
+    /*display: none;*/
+    /*}*/
+
+    .inspect svg .line {
+      fill: none;
+      stroke: steelblue;
+      stroke-width: 1.5px;
+    }
+  </style>
+
+</head>
+<body>
+<div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+<script src="/browserify/load?libs=util,moment,jquery,d3,lodash,ol_time,ol_layers,ol_inspect"></script>
+<script>
+  var moment = require( 'moment' );
+  var $ = require( 'jquery' );
+  var _ = require( 'lodash' );
+  var d3 = require( 'd3' );
+
+  require( 'ol.control.TimeControl' );
+  require( 'ol.control.LayersControl' );
+  require( 'ol.control.InspectControl' );
+
+  //var jsdap = require( 'jsdap' );
+  //
+  //debugger;
+</script>
+<script type="text/javascript">
+  var arcg = new ol.layer.Tile( {
+    title  : 'Arcgis',
+    source : new ol.source.XYZ( {
+      url : 'http://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'
+    } )
+  } );
+
+  var emap = new ol.layer.Tile( {
+    title  : 'emap',
+    source : new ol.source.XYZ( {
+      url : 'http://emap.dse.vic.gov.au/ArcGIS/rest/services/mapscape/MapServer/tile/{z}/{y}/{x}'
+    } )
+  } );
+  /*
+   var emap = new ol.layer.Tile( {
+   title  : 'emap',
+   source : new ol.source.TileWMS( {
+   url    : 'http://emap.dse.vic.gov.au/ArcGIS/rest/services/mapscape/MapServer/export',
+   params : {
+   bboxsr      : '3111',
+   imagesr     : '3111',
+   //bboxsr      : '3857',
+   //imagesr     : '3857',
+   size        : '256,256',
+   format      : 'PNG',
+   f           : 'image',
+   transparent : 'true',
+   layers      : 'show:2'
+   }
+   } )
+   } );
+   */
+
+
+  var thredds = function ( file, layer ) {
+    var deferred = new $.Deferred();
+
+    var wms_url = 'http://localhost:3000/thredds/wms/bom/' + file + '.nc';
+    var dod_url = 'http://localhost:3000/thredds/dodsC/bom/' + file + '.nc.dods';
+
+    $.when(
+        $.ajax( wms_url + '?service=WMS&version=1.3.0&request=GetCapabilities' ),
+        $.ajax( wms_url + '?service=WMS&version=1.3.0&request=GetCapabilities' )
+    ).then( function ( a ) {
+          var parser = new ol.format.WMSCapabilities();
+          var capability = parser.read( a[0] );
+          // TODO get layer name from result
+          deferred.resolve(
+              new ol.layer.Tile( {
+                    wms     : {
+                      file  : file,
+                      layer : layer,
+                      url   : 'http://localhost:3000/thredds/wms/bom/' + file + '.nc'
+                    },
+                    dods    : {
+                      layer : layer,
+                      url   : 'http://localhost:3000/thredds/dodsC/bom/' + file + '.nc.dods'
+                    },
+                    title   : capability.Capability.Layer.Layer[0].Layer[0].Title,
+                    opacity : 0.45,
+                    visible : false,
+                    source  : new ol.source.TileWMS( {
+                      url        : wms_url,
+                      //projection : ol.proj.get( "EPSG:3111" ),
+                      projection : ol.proj.get( "EPSG:3857" ),
+                      params     : {
+                        "layers"          : layer,
+                        "elevation"       : "0",
+                        "time"            : moment().startOf( 'day' ).add( 'days',
+                            0 ).format( "YYYY-MM-DDTHH:mm:ss.SSS" ),
+                        "transparent"     : "true",
+                        "styles"          : "boxfill/redblue",
+                        "colorscalerange" : "0,30",
+                        "numcolorbands"   : "30",
+                        "logscale"        : "false",
+                        "service"         : "WMS",
+                        "request"         : "GetMap",
+                        "exceptions"      : "application/vnd.ogc.se_inimage",
+                        "format"          : "image/png"
+                      }
+                    } )
+                  }
+              )
+          );
+        } );
+    return deferred.promise();
+  };
+
+  $.when(
+      thredds( 'IDV71000_VIC_T_SFC', 'T_SFC' ),
+      thredds( 'IDV71006_VIC_Wind_Mag_SFC', 'Wind_Mag_SFC' ),
+      thredds( 'IDV71115_VIC_CHaines_SFC', 'CHaines_SFC' ),
+      thredds( 'IDV71122_VIC_GFDI_SFC', 'GFDI_SFC' )
+  ).done( function () {
+        var map = new ol.Map( {
+          target   : 'map',
+          layers   : _.union( [arcg], arguments ),
+          controls : ol.control.defaults( {attribution : false, logo : false} ).extend( [
+            new ol.control.FullScreen(),
+            new ol.control.LayersControl(),
+            new ol.control.InspectControl( {
+              projection : ol.proj.get( "EPSG:4326" )
+            } ),
+            new ol.control.TimeControl( {
+              min : moment().startOf( 'day' ).add( 'days', 0 ).toDate(),
+              max : moment().startOf( 'day' ).add( 'days', 6 ).toDate()
+            } )
+            //new ol.control.MousePosition({ projection : ol.proj.get( "EPSG:4326" ) })
+            //new ol.control.Zoom(),
+            //new ol.control.ScaleLine()
+          ] ),
+          view     : new ol.View2D( {
+            projection : ol.proj.get( "EPSG:3857" ),
+            center     : ol.proj.transform( [144.5, -37], 'EPSG:4326', 'EPSG:3857' ),
+            zoom       : 7
+          } )
+        } );
+      } );
+</script>
+</body>
+</html>
