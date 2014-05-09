@@ -1,5 +1,7 @@
 node_modules
+_node_modules
 .nide
 .dotcloud
 dist
 *.run
+npm-debug.log

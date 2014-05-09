@@ -53,9 +53,9 @@
       padding: 2px;
     }
 
-    .layers input {
-      font-size: 20px;
-      height: 30px;
+    .layers label {
+      /*font-size: 20px;*/
+      /*height: 30px;*/
       width: 150px;
       line-height: 26px;
     }
@@ -71,6 +71,11 @@
       position: absolute;
       bottom: 20px;
       left: 8px;
+      background: rgba(255, 255, 255, 0.4);
+      border-radius: 10px;
+      border-style: solid;
+      border-color: #7b98bc;
+      padding: 2px;
     }
 
     .inspect svg {
@@ -98,23 +103,42 @@
 
 </head>
 <body>
-<div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
-<script src="/browserify/load?libs=util,moment,jquery,d3,lodash,ol_time,ol_layers,ol_inspect"></script>
+
+<label>
+
+</label>
+
+<div id="map" style="position: absolute; top: 0px; left: 0px; width: 100%; height: 100%;"></div>
+<script src="/browserify/load?libs=util,moment,jquery,d3,lodash,ol_time,ol_layers,ol_inspect,xml2js"></script>
 <script>
+  var util = require( 'util' );
   var moment = require( 'moment' );
   var $ = require( 'jquery' );
   var _ = require( 'lodash' );
   var d3 = require( 'd3' );
+  var xml2js = require( 'xml2js' );
 
   require( 'ol.control.TimeControl' );
   require( 'ol.control.LayersControl' );
   require( 'ol.control.InspectControl' );
 
-  //var jsdap = require( 'jsdap' );
-  //
-  //debugger;
 </script>
 <script type="text/javascript">
+
+  $.ajax( { url : "http://localhost:3000/thredds/catalog.xml", dataType: "xml" } ).done(
+      function ( data, status, response ) {
+        //console.log( arguments );
+        //console.log( data );
+        //console.log( status );
+        //console.log( response );
+        new xml2js.Parser().parseString( response.responseText.toString(), function ( err, data ) {
+          //console.log( util.inspect( err ) );
+          //console.log( util.inspect( data.catalog.service ) );
+          //console.log( util.inspect( data.catalog.catalogRef ) );
+        } );
+      }
+  );
+
   var arcg = new ol.layer.Tile( {
     title  : 'Arcgis',
     source : new ol.source.XYZ( {
@@ -122,31 +146,32 @@
     } )
   } );
 
-  var emap = new ol.layer.Tile( {
-    title  : 'emap',
-    source : new ol.source.XYZ( {
-      url : 'http://emap.dse.vic.gov.au/ArcGIS/rest/services/mapscape/MapServer/tile/{z}/{y}/{x}'
-    } )
-  } );
   /*
    var emap = new ol.layer.Tile( {
-   title  : 'emap',
-   source : new ol.source.TileWMS( {
-   url    : 'http://emap.dse.vic.gov.au/ArcGIS/rest/services/mapscape/MapServer/export',
-   params : {
-   bboxsr      : '3111',
-   imagesr     : '3111',
-   //bboxsr      : '3857',
-   //imagesr     : '3857',
-   size        : '256,256',
-   format      : 'PNG',
-   f           : 'image',
-   transparent : 'true',
-   layers      : 'show:2'
-   }
+   title  : 'Emap',
+   source : new ol.source.XYZ( {
+   url : 'http://emap.dse.vic.gov.au/ArcGIS/rest/services/mapscape/MapServer/tile/{z}/{y}/{x}'
    } )
    } );
    */
+
+  var emap = new ol.layer.Tile( {
+    title  : 'Emap',
+    source : new ol.source.TileWMS( {
+      url    : 'http://emap.dse.vic.gov.au/ArcGIS/rest/services/mapscape/MapServer/export',
+      params : {
+        //bboxsr      : '3111',
+        //imagesr     : '3111',
+        bboxsr      : '3857',
+        imagesr     : '3857',
+        size        : '256,256',
+        format      : 'PNG',
+        f           : 'image',
+        transparent : 'true',
+        layers      : 'show:2'
+      }
+    } )
+  } );
 
 
   var thredds = function ( file, layer ) {
@@ -186,9 +211,9 @@
                         "time"            : moment().startOf( 'day' ).add( 'days',
                             0 ).format( "YYYY-MM-DDTHH:mm:ss.SSS" ),
                         "transparent"     : "true",
-                        "styles"          : "boxfill/redblue",
-                        "colorscalerange" : "0,30",
-                        "numcolorbands"   : "30",
+                        "styles"          : "boxfill/rainbow",
+                        "colorscalerange" : "0,40",
+                        "numcolorbands"   : "40",
                         "logscale"        : "false",
                         "service"         : "WMS",
                         "request"         : "GetMap",
@@ -207,11 +232,15 @@
       thredds( 'IDV71000_VIC_T_SFC', 'T_SFC' ),
       thredds( 'IDV71006_VIC_Wind_Mag_SFC', 'Wind_Mag_SFC' ),
       thredds( 'IDV71115_VIC_CHaines_SFC', 'CHaines_SFC' ),
-      thredds( 'IDV71122_VIC_GFDI_SFC', 'GFDI_SFC' )
+      thredds( 'IDV71122_VIC_GFDI_SFC', 'GFDI_SFC' ),
+      thredds( 'IDV71117_VIC_FFDI_SFC', 'FFDI_SFC' ),
+      thredds( 'IDV71018_VIC_RH_SFC', 'RH_SFC' )
   ).done( function () {
         var map = new ol.Map( {
-          target   : 'map',
-          layers   : _.union( [arcg], arguments ),
+          target : 'map',
+
+          layers : _.union( [arcg], arguments ),
+
           controls : ol.control.defaults( {attribution : false, logo : false} ).extend( [
             new ol.control.FullScreen(),
             new ol.control.LayersControl(),
@@ -222,11 +251,9 @@
               min : moment().startOf( 'day' ).add( 'days', 0 ).toDate(),
               max : moment().startOf( 'day' ).add( 'days', 6 ).toDate()
             } )
-            //new ol.control.MousePosition({ projection : ol.proj.get( "EPSG:4326" ) })
-            //new ol.control.Zoom(),
-            //new ol.control.ScaleLine()
           ] ),
-          view     : new ol.View2D( {
+
+          view : new ol.View2D( {
             projection : ol.proj.get( "EPSG:3857" ),
             center     : ol.proj.transform( [144.5, -37], 'EPSG:4326', 'EPSG:3857' ),
             zoom       : 7

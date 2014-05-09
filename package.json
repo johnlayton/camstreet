@@ -11,6 +11,9 @@
     "start" : "node camstreet-server.js",
     "debug" : "nodemon -w . -w html -w dist -w public -w lib -w views camstreet-server.js"
   },
+  "_browserify"  : {
+    "_transform" : ["brfs"]
+  },
   "dependencies" : {
     "buffer-stream"            : "*",
     "tap"                      : "*",
@@ -68,7 +71,13 @@
     "moment-range"             : "*",
     "moment-interval"          : "*",
     "proxy-middleware"         : "*",
-    "lodash"                   : "*"
+    "lodash"                   : "*",
+    "xml2js"                   : "*",
+    "sinon"                    : "*",
+    "xml-stream"               : "^0.4.4",
+    "errorhandler"             : "^1.0.1",
+    "morgan"                   : "^1.0.0",
+    "through"                  : "*"
   },
   "description"  : "",
   "main"         : "camstreet-server.js",
