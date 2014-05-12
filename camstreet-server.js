@@ -18,9 +18,6 @@ var connect = require( 'connect' )
   , errorhandler = require( 'errorhandler' )
   , merge = require( './lib/camstreet.merge.js' );
 
-console.log( util.inspect( process.cwd() ) );
-console.log( util.inspect( process.version ) );
-
 var nano = require( 'nano' )( 'http://localhost:5984' );
 var db_name = "places";
 var db = nano.use( db_name );
@@ -330,153 +327,165 @@ app.get( "/debug", function ( req, res ) {
 } );
 
 var libs = {
-  hyperglue     : {
+  hyperglue       : {
     library : 'hyperglue',
     options : { expose : 'hyperglue' }
   },
-  moment        : {
+  moment          : {
     library : 'moment',
     options : { expose : 'moment' }
   },
-  moment_range  : {
+  moment_range    : {
     library : 'moment-range',
     options : { expose : 'moment.range' }
   },
-  geometry      : {
+  geometry        : {
     library : './lib/camstreet.geometry.js',
     options : { expose : 'geometry' }
   },
-  merge         : {
+  merge           : {
     library : './lib/camstreet.merge.js',
     options : { expose : 'merge' }
   },
-  template      : {
+  template        : {
     library : './lib/camstreet.template.js',
     options : { expose : 'template' }
   },
-  conference    : {
+  conference      : {
     library : './lib/camstreet.conference.js',
     options : { expose : 'conference' }
   },
-  branding      : {
+  branding        : {
     library : './lib/camstreet.branding.js',
     options : { expose : 'branding' }
   },
-  clustering    : {
+  clustering      : {
     library : './lib/camstreet.clustering.js',
     options : { expose : 'clustering' }
   },
-  notifications : {
+  notifications   : {
     library : './lib/camstreet.notifications.js',
     options : { expose : 'notifications' }
   },
-  coverage      : {
+  coverage        : {
     library : './lib/camstreet.coverage.js',
     options : { expose : 'coverage' }
   },
-  time          : {
+  time            : {
     library : './lib/camstreet.time.js',
     options : { expose : 'time' }
   },
-  drawing       : {
+  drawing         : {
     library : './lib/camstreet.drawing.js',
     options : { expose : 'features' }
   },
-  markers       : {
+  markers         : {
     library : './lib/camstreet.markers.js',
     options : { expose : 'markers' }
   },
-  geojson       : {
+  geojson         : {
     library : './lib/camstreet.geojson.js',
     options : { expose : 'geojson' }
   },
-  availability  : {
+  availability    : {
     library : './lib/camstreet.availability.js',
     options : { expose : 'availability' }
   },
-  topojson      : {
+  topojson        : {
     library : './lib/camstreet.topojson.js',
     options : { expose : 'topojson' }
   },
-  markercluster : {
+  markercluster   : {
     library : './lib/camstreet.markercluster.js',
     options : { expose : 'markercluster' }
   },
-  handlebars    : {
+  handlebars      : {
     library : './lib/camstreet.handlebars.js',
     options : { expose : 'handlebars' }
   },
-  project       : {
+  project         : {
     library : './lib/camstreet.project.js',
     options : { expose : 'project' }
   },
-  jsdap         : {
+  jsdap           : {
     library : './lib/camstreet.jsdap.js',
     options : { expose : 'jsdap' }
   },
-  ol_time       : {
+  ol_thredds      : {
+    library : './lib/camstreet.openlayers.thredds.js',
+    options : { expose : 'ol.control.ThreddsControl' }
+  },
+  ol_time         : {
     library : './lib/camstreet.openlayers.time.js',
     options : { expose : 'ol.control.TimeControl' }
   },
-  ol_layers     : {
+  ol_layers       : {
     library : './lib/camstreet.openlayers.layers.js',
     options : { expose : 'ol.control.LayersControl' }
   },
-  ol_inspect    : {
+  ol_inspect      : {
     library : './lib/camstreet.openlayers.inspect.js',
     options : { expose : 'ol.control.InspectControl' }
   },
-  jquery        : {
+  jquery          : {
     library : 'jquery-browserify',
     options : { expose : 'jquery' }
   },
-  io            : {
+  io              : {
     library : 'socket.io-browserify',
     options : { expose : 'socket.io' }
   },
-  geohash       : {
+  geohash         : {
     library : 'geohash',
     options : { expose : 'geohash' }
   },
-  util          : {
+  util            : {
     library : 'util',
     options : { expose : 'util' }
   },
-  d3            : {
+  d3              : {
     library : 'd3',
     options : { expose : 'd3' }
   },
-  traverse      : {
+  traverse        : {
     library : 'traverse',
     options : { expose : 'traverse' }
   },
-  http          : {
+  http            : {
     library : 'http-browserify',
     options : { expose : 'http-browserify' }
   },
-  underscore    : {
+  underscore      : {
     library : 'underscore',
     options : { expose : 'underscore' }
   },
-  angular       : {
+  angular         : {
     library : 'angular-browserify',
     options : { expose : 'angular' }
   },
-  crossfilter   : {
+  crossfilter     : {
     library : 'crossfilter',
     options : { expose : 'crossfilter' }
   },
-  pip           : {
+  pip             : {
     library : 'leaflet-pip',
     options : { expose : 'pip' }
   },
-  lodash        : {
+  lodash          : {
     library : 'lodash',
     options : { expose : 'lodash' }
   },
-  xml2js        : {
+  browser_request : {
+    library : 'browser-request',
+    options : { expose : 'browser-request' }
+  },
+  xml2js          : {
     library : 'xml2js',
     options : { expose : 'xml2js' }
+  },
+  q               : {
+    library : 'q',
+    options : { expose : 'q' }
   }
 };
 
@@ -498,38 +507,20 @@ app.get( "/browserify/load", function ( req, res ) {
   }, browser() )
     .transform( function ( file ) {
       var data = '';
-
-      function write (buf) {
+      var write = function( buf ) {
         data += buf
       };
-      function end () {
-        //this.queue(coffee.compile(data));
-        this.queue(data.toString());
-        this.queue(null);
+      var end = function() {
+        this.queue( data.toString() );
+        this.queue( null );
       };
-
       if ( file.indexOf( 'node_modules' ) > 0 ) {
-        console.log( "Ignore -> " + file );
-        return through(write, end);
-      } else {
-        console.log( "BRFS -> " + file );
+        return through( write, end );
+      }
+      else {
         return brfs( file );
       }
     } )
-    .bundle( function ( err, src ) {
-      if ( err ) {
-        console.log( "...." + util.inspect( err ) );
-      }
-    } )
-    .pipe( oppressor( req ) )
-    .pipe( res )
-} );
-
-/*app.get( "/browserify/load/:lib", function ( req, res ) {
-  res.set( "Content-Type", "application/javascript" );
-  browser().require( libs[req.params.lib].library,
-    libs[req.params.lib].options )
-    .transform( 'brfs' )
     .bundle( function ( err, src ) {
       if ( err ) {
         console.log( util.inspect( err ) );
@@ -537,7 +528,21 @@ app.get( "/browserify/load", function ( req, res ) {
     } )
     .pipe( oppressor( req ) )
     .pipe( res )
-} );*/
+} );
+
+/*app.get( "/browserify/load/:lib", function ( req, res ) {
+ res.set( "Content-Type", "application/javascript" );
+ browser().require( libs[req.params.lib].library,
+ libs[req.params.lib].options )
+ .transform( 'brfs' )
+ .bundle( function ( err, src ) {
+ if ( err ) {
+ console.log( util.inspect( err ) );
+ }
+ } )
+ .pipe( oppressor( req ) )
+ .pipe( res )
+ } );*/
 
 var cross = function ( req, res, next ) {
   res.header( 'Access-Control-Allow-Origin', '*' );

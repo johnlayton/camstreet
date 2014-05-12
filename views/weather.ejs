@@ -109,7 +109,7 @@
 </label>
 
 <div id="map" style="position: absolute; top: 0px; left: 0px; width: 100%; height: 100%;"></div>
-<script src="/browserify/load?libs=util,moment,jquery,d3,lodash,ol_time,ol_layers,ol_inspect,xml2js"></script>
+<script src="/browserify/load?libs=util,moment,jquery,d3,lodash,ol_time,ol_layers,ol_inspect,xml2js,ol_thredds,q"></script>
 <script>
   var util = require( 'util' );
   var moment = require( 'moment' );
@@ -121,10 +121,12 @@
   require( 'ol.control.TimeControl' );
   require( 'ol.control.LayersControl' );
   require( 'ol.control.InspectControl' );
+  require( 'ol.control.ThreddsControl' );
 
 </script>
 <script type="text/javascript">
 
+/*
   $.ajax( { url : "http://localhost:3000/thredds/catalog.xml", dataType: "xml" } ).done(
       function ( data, status, response ) {
         //console.log( arguments );
@@ -138,6 +140,7 @@
         } );
       }
   );
+*/
 
   var arcg = new ol.layer.Tile( {
     title  : 'Arcgis',
@@ -208,8 +211,7 @@
                       params     : {
                         "layers"          : layer,
                         "elevation"       : "0",
-                        "time"            : moment().startOf( 'day' ).add( 'days',
-                            0 ).format( "YYYY-MM-DDTHH:mm:ss.SSS" ),
+                        "time"            : moment().startOf( 'day' ).add( 'days', 0 ).format( "YYYY-MM-DDTHH:mm:ss.SSS" ),
                         "transparent"     : "true",
                         "styles"          : "boxfill/rainbow",
                         "colorscalerange" : "0,40",
@@ -228,6 +230,7 @@
     return deferred.promise();
   };
 
+/*
   $.when(
       thredds( 'IDV71000_VIC_T_SFC', 'T_SFC' ),
       thredds( 'IDV71006_VIC_Wind_Mag_SFC', 'Wind_Mag_SFC' ),
@@ -260,6 +263,32 @@
           } )
         } );
       } );
+ } );
+*/
+  var map = new ol.Map( {
+    target : 'map',
+
+    layers : [arcg],
+
+    controls : ol.control.defaults( {attribution : false, logo : false} ).extend( [
+      //new ol.control.FullScreen(),
+      //new ol.control.LayersControl(),
+      //new ol.control.InspectControl( {
+      //  projection : ol.proj.get( "EPSG:4326" )
+      //} ),
+      //new ol.control.TimeControl( {
+      //  min : moment().startOf( 'day' ).add( 'days', 0 ).toDate(),
+      //  max : moment().startOf( 'day' ).add( 'days', 6 ).toDate()
+      //} )
+      new ol.control.ThreddsControl( {} )
+    ] ),
+
+    view : new ol.View2D( {
+      projection : ol.proj.get( "EPSG:3857" ),
+      center     : ol.proj.transform( [144.5, -37], 'EPSG:4326', 'EPSG:3857' ),
+      zoom       : 7
+    } )
+  } );
 </script>
 </body>
 </html>
