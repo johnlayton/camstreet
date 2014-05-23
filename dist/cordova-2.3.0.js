@@ -6456,4 +6456,6 @@
   }(window));
 
 
-})();var PhoneGap = cordova;
+})();
+
+var PhoneGap = cordova;

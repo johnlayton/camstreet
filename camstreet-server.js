@@ -18,6 +18,7 @@ var connect = require( 'connect' )
   , errorhandler = require( 'errorhandler' )
   , merge = require( './lib/camstreet.merge.js' );
 
+
 var nano = require( 'nano' )( 'http://localhost:5984' );
 var db_name = "places";
 var db = nano.use( db_name );
@@ -511,6 +512,7 @@ app.get( "/browserify/load", function ( req, res ) {
         data += buf
       };
       var end = function() {
+        //this.queue(coffee.compile(data));
         this.queue( data.toString() );
         this.queue( null );
       };
