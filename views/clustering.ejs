@@ -160,7 +160,7 @@
     <script>
       var b = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile";
       var c = "http://" + document.location.hostname + ":8888/";
-      var d = "http://" + document.location.hostname + ":8080/"
+      var d = "http://" + document.location.hostname + ":8080/";
       var g = '/{z}/{y}/{x}.png';
 
       var map = L.map( 'map', { attributionControl: false } )
@@ -315,7 +315,6 @@
               icon: icon( feature.properties ),
               title: title( feature.properties )
             } );
-            return marker;
           }
         } );
         layer.on( "data:loaded", function() {

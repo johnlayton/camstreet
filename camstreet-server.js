@@ -51,7 +51,7 @@ nano.db.create( db_name, function () {
 
 var app = express();
 
-app.set( 'port', process.env.PORT || 3000 );
+app.set( 'port', process.env.PORT || 3003 );
 app.set( 'views', __dirname + '/views' );
 app.set( 'view engine', 'ejs' );
 
